@@ -8,11 +8,38 @@
 // package.json stehen, weil wir die Werte selbst weiterverarbeiten
 // (autoHandleEvents: false, siehe index.js).
 
+var konfig = require("./konfig");
+
 var TAGE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
 module.exports = [
 	{ type: "heading", defaultValue: "Pendelzug" },
-	{ type: "text", defaultValue: "Halstenbek ⇄ Itzehoe" },
+
+	{
+		type: "section",
+		items: [
+			{ type: "heading", defaultValue: "Strecke" },
+			// „haltestelle“ ist unser eigenes Feld mit Vorschlagssuche
+			// (haltestelle-feld.js, in index.js bei Clay angemeldet).
+			// Der Wert ist ein JSON-Text { id, name, lat, lon }.
+			{
+				type: "haltestelle",
+				messageKey: "start",
+				label: "Start",
+				defaultValue: JSON.stringify(konfig.START),
+			},
+			{
+				type: "haltestelle",
+				messageKey: "ziel",
+				label: "Ziel",
+				defaultValue: JSON.stringify(konfig.ZIEL),
+				description: "Ein paar Buchstaben tippen und einen Vorschlag antippen – " +
+					"nur Haltestellen aus der Liste werden übernommen. " +
+					"Bahnhöfe und Haltestellen in der Nähe stehen oben. " +
+					"Der Hinweg führt vom Start zum Ziel, der Rückweg umgekehrt.",
+			},
+		],
+	},
 
 	{
 		type: "section",

@@ -24,11 +24,38 @@ var clayConfig = require("./config");
 // autoHandleEvents: false = Clay schickt NICHT selbst alle Werte an die Uhr.
 // Das machen wir unten, damit die Zugangsdaten auf dem Handy bleiben.
 var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
+// Eigenes Feld „Haltestelle mit Vorschlagssuche“ für Start und Ziel
+clay.registerComponent(require("./haltestelle-feld"));
 // Aktuelle Datenquelle. Für Geofox (Schritt 6) wird nur diese Zeile geändert.
 var quelle = require("./transitous");
 
 // Zwischenspeicher der letzten Suche
 var cache = { richtung: null, zeit: 0, verbindungen: [] };
+
+// Die Kopfzeile der Uhr („Start → Ziel“, fett 18 px) fasst etwa 22 Zeichen.
+// Sind die Namen zusammen länger, kürzen wir beide gleichmäßig mit „…“.
+var KOPF_ZEICHEN = 22;
+function kopfzeile(von, nach) {
+	var text = von + " → " + nach;
+	if (text.length <= KOPF_ZEICHEN) return text;
+	var rest = KOPF_ZEICHEN - 3;                 // 3 Zeichen für " → "
+	var haelfte = Math.floor(rest / 2);
+	function kurz(n, max) { return n.length <= max ? n : n.slice(0, max - 1) + "…"; }
+	// Ist ein Name kurz, bekommt der andere dessen übrigen Platz;
+	// sind beide lang, teilen sie sich den Platz.
+	var maxVon, maxNach;
+	if (nach.length <= haelfte) { maxNach = nach.length; maxVon = rest - nach.length; }
+	else if (von.length <= haelfte) { maxVon = von.length; maxNach = rest - von.length; }
+	else { maxVon = rest - haelfte; maxNach = haelfte; }
+	return kurz(von, maxVon) + " → " + kurz(nach, maxNach);
+}
+
+// Start und Ziel der angefragten Richtung (aus den Einstellungen).
+// Hinweg: Start → Ziel, Rückweg: Ziel → Start.
+function strecke(richtung) {
+	var e = einstellungen.lesen();
+	return richtung === "rueck" ? { von: e.ziel, nach: e.start } : { von: e.start, nach: e.ziel };
+}
 
 // An die Uhr senden. „danach“ (optional) läuft erst, wenn die Uhr den Empfang
 // bestätigt hat – so überholen sich zwei Nachrichten nicht.
@@ -97,11 +124,10 @@ function antworte(anfrage) {
 	var index = Math.max(0, Math.min(liste.length - 1, start + (anfrage.schritt || 0)));
 	localStorage.setItem(schluessel, kennung(liste[index]));
 
-	var hin = anfrage.richtung !== "rueck";
+	var s = strecke(anfrage.richtung);
 	var paket = aufbereitung.paket(liste, index, {
-		richtung: hin ? konfig.HALTESTELLE_A + " → " + konfig.HALTESTELLE_B
-			: konfig.HALTESTELLE_B + " → " + konfig.HALTESTELLE_A,
-		ziel: hin ? konfig.HALTESTELLE_B : konfig.HALTESTELLE_A,
+		richtung: kopfzeile(s.von.name, s.nach.name),
+		ziel: s.nach.name,
 		quelle: quelle.name,
 		nr: index - basis,   // 0 = nächste, negativ = schon unterwegs, positiv = später
 	});
@@ -116,12 +142,12 @@ function bearbeite(anfrage) {
 		antworte(anfrage);
 		return;
 	}
-	var hin = anfrage.richtung !== "rueck";
+	var s = strecke(anfrage.richtung);
+	if (s.von.id === s.nach.id) { sendeFehler("Start und Ziel sind gleich – bitte in den Einstellungen ändern"); return; }
 	// Ab 60 Minuten vor jetzt suchen, damit auch Verbindungen dabei sind,
 	// in denen man gerade sitzt (für „frühere Verbindung“ und Ansicht C).
 	var ab = new Date(Date.now() - 60 * 60000);
-	quelle.suche(hin ? konfig.HALTESTELLE_A : konfig.HALTESTELLE_B,
-		hin ? konfig.HALTESTELLE_B : konfig.HALTESTELLE_A, ab,
+	quelle.suche(s.von, s.nach, ab,
 		function (fehler, verbindungen) {
 			if (fehler) { sendeFehler(fehler); return; }
 			cache = { richtung: anfrage.richtung, zeit: Date.now(), verbindungen: verbindungen };
@@ -177,9 +203,15 @@ Pebble.addEventListener("showConfiguration", function () {
 // des Handys) und den für die Uhr bestimmten Teil senden.
 Pebble.addEventListener("webviewclosed", function (e) {
 	if (!e || !e.response) return;   // ohne Speichern geschlossen
+	var vorher = JSON.stringify(strecke("hin"));
 	clay.getSettings(e.response, false);
 	// Die Uhr fragt danach die angezeigte Verbindung neu an. Das Handy bereitet
 	// sie aus dem Zwischenspeicher mit der neuen Mindest-Umstiegszeit auf –
-	// ohne neue Anfrage an Transitous.
+	// ohne neue Anfrage an Transitous. Nur wenn sich Start oder Ziel geändert
+	// haben, ist der Zwischenspeicher wertlos und wird geleert.
+	if (JSON.stringify(strecke("hin")) !== vorher) {
+		console.log("Strecke geändert: " + strecke("hin").von.name + " → " + strecke("hin").nach.name);
+		cache = { richtung: null, zeit: 0, verbindungen: [] };
+	}
 	sendeEinstellungen();
 });

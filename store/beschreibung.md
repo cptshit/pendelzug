@@ -24,7 +24,7 @@ Zum Kopieren in das Formular im Developer Dashboard
 (reiner Text, so übernehmen)
 
 ```
-Pendelzug zeigt auf der Pebble Time 2, ob deine Bahnverbindung zwischen Halstenbek und Itzehoe pünktlich ist und ob die Umstiege klappen.
+Pendelzug zeigt auf der Pebble Time 2, ob deine Bahnverbindung pünktlich ist und ob die Umstiege klappen.
 
 - Ampel auf einen Blick: grün = pünktlich, gelb = verspätet oder Umstieg knapp, rot = Ausfall oder Anschluss weg – immer mit Text, nicht nur Farbe.
 - Alle Teilstücke mit Linie, Plan-Zeit, Verspätung und Umstiegszeit; bei verpasstem Anschluss die Ankunft der nächsten Verbindung.
@@ -32,7 +32,7 @@ Pendelzug zeigt auf der Pebble Time 2, ob deine Bahnverbindung zwischen Halstenb
 - Automatik: Im eingestellten Zeitfenster (Standard Mo–Fr 07:00–09:00 Hinweg) startet die App von selbst, aktualisiert alle 2 Minuten und vibriert nur bei Verspätung, Ausfall oder verpasstem Umstieg.
 - Tasten: Auf/Ab frühere/spätere Verbindung, Select neu laden, Select lang Richtung wechseln.
 
-Einstellungen über das Zahnrad in der Pebble-App: Ansicht, Mindest-Umstiegszeit, Automatik-Fenster.
+Einstellungen über das Zahnrad in der Pebble-App: Start und Ziel (mit Vorschlagssuche), Ansicht, Mindest-Umstiegszeit, Automatik-Fenster.
 
 Daten: Transitous (https://transitous.org, Quellen: https://transitous.org/sources/), Kartendaten © OpenStreetMap-Mitwirkende. Alle Angaben ohne Gewähr.
 

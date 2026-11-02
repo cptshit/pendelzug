@@ -4,7 +4,11 @@
 // Clay speichert alle Werte im localStorage des Handys unter „clay-settings“.
 // Fehlt ein Wert (z. B. vor dem ersten Speichern), gilt der Standardwert.
 
+var konfig = require("./konfig");
+
 var STANDARD = {
+	start: JSON.stringify(konfig.START),
+	ziel: JSON.stringify(konfig.ZIEL),
 	ansicht: "A",
 	knapp: 3,
 	hinAn: true,
@@ -32,7 +36,17 @@ function lesen() {
 		e[k] = gespeichert[k] !== undefined && gespeichert[k] !== null ? gespeichert[k] : STANDARD[k];
 	});
 	e.knapp = Number(e.knapp) || STANDARD.knapp;
+	e.start = haltestelle(e.start, konfig.START);
+	e.ziel = haltestelle(e.ziel, konfig.ZIEL);
 	return e;
+}
+
+// Gespeicherte Haltestelle (JSON-Text) in ein Objekt { id, name, … }
+// umwandeln. Ist der Wert kaputt oder unvollständig, gilt der Standard.
+function haltestelle(wert, standard) {
+	var h = null;
+	try { h = typeof wert === "string" ? JSON.parse(wert) : wert; } catch (err) { h = null; }
+	return h && h.id && h.name ? h : standard;
 }
 
 // Nur das, was die Uhr braucht – OHNE Zugangsdaten

@@ -3,7 +3,8 @@
 <img src="store/icon_144.png" alt="Pendelzug-Logo" width="96" align="right">
 
 Watchapp für die **Pebble Time 2**. Sie zeigt auf einen Blick, ob die
-Bahnverbindung Halstenbek ⇄ Itzehoe pünktlich ist und ob die Umstiege klappen.
+Bahnverbindung pünktlich ist und ob die Umstiege klappen. Start und Ziel sind
+frei wählbar (Standard: Halstenbek ⇄ Itzehoe).
 
 **Im Pebble-Store (nicht gelistet, nur per Link):** <https://apps.repebble.com/b7e5b4b47e684f52b75448df>
 
@@ -70,6 +71,12 @@ die Ansicht (A → B → C).
 
 In der Pebble-App auf dem Handy über das Zahnrad bei Pendelzug:
 
+- **Start und Ziel:** ein paar Buchstaben tippen, dann einen Vorschlag antippen.
+  Übernommen werden nur Haltestellen aus der Vorschlagsliste; frei getippter
+  Text wird beim Verlassen des Feldes verworfen. Bahnhöfe und Haltestellen in
+  der Nähe (der jeweils anderen gewählten Haltestelle) stehen oben, doppelte
+  Einträge werden zusammengefasst. Hinweg = Start → Ziel, Rückweg umgekehrt.
+  Ist der Name für die Kopfzeile der Uhr zu lang, wird er mit „…“ gekürzt.
 - **Ansicht:** A – Liste (Standard), B – Ankunft groß, C – Nächster Schritt
 - **Mindest-Umstiegszeit:** 1–10 Minuten (Standard 3)
 - **Automatik Hinweg / Rückweg:** an/aus, Wochentage, Zeitfenster
@@ -163,8 +170,9 @@ src/embeddedjs/testdaten.js   vier Beispiel-Verbindungen für den Testbetrieb
 src/embeddedjs/automatik.js   Regeln für Automatik-Fenster und Vibration
 src/embeddedjs/manifest.json  Liste der JavaScript-Module der Uhr
 src/pkjs/index.js             Handy-Code (PKJS): Anfragen der Uhr beantworten
-src/pkjs/konfig.js            Haltestellen, Kontakt für Transitous
+src/pkjs/konfig.js            Standard-Haltestellen, Kontakt für Transitous
 src/pkjs/config.js            Aufbau der Einstellungsseite (Clay)
+src/pkjs/haltestelle-feld.js  Clay-Feld „Haltestelle“ mit Vorschlagssuche
 src/pkjs/einstellungen.js     Einstellungen lesen, Teil für die Uhr (ohne Zugangsdaten)
 src/pkjs/transitous.js        Adapter für die Verbindungssuche bei Transitous
 src/pkjs/aufbereitung.js      Umstiege, Ampel, Paket für die Uhr (quellenunabhängig)

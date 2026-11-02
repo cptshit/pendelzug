@@ -12,9 +12,14 @@ module.exports = {
 	// absichtlich KEINE Anfrage an Transitous (Nutzungsbedingungen).
 	KONTAKT: "pendelzug@wortreich.eu",
 
-	// Strecke. Die Haltestellen-IDs sucht der Adapter beim ersten Mal selbst.
-	HALTESTELLE_A: "Halstenbek",
-	HALTESTELLE_B: "Itzehoe",
+	// Standard-Strecke, solange in den Einstellungen nichts anderes gewählt ist.
+	// Start und Ziel wählt man auf der Einstellungsseite mit der Vorschlagssuche
+	// (haltestelle-feld.js). Gespeichert wird dasselbe Format wie hier:
+	//   id       Haltestellen-Kennung bei Transitous
+	//   name     Anzeigename
+	//   lat/lon  Koordinaten (für „Vorschläge in der Nähe zuerst“)
+	START: { id: "de-DELFI_de:01056:98950", name: "Halstenbek", lat: 53.63038, lon: 9.839092 },
+	ZIEL: { id: "de-DELFI_de:01061:46671", name: "Itzehoe", lat: 53.923874, lon: 9.510287 },
 
 	// Wie lange (Sekunden) ein Suchergebnis wiederverwendet wird, z. B. beim
 	// Blättern mit Auf/Ab. Hält die Last für Transitous gering.

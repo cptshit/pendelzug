@@ -44,9 +44,13 @@ function holeJson(pfad, callback) {
 	xhr.send();
 }
 
-// Haltestellen-ID zu einem Namen suchen. Das Ergebnis wird im localStorage
-// des Handys gespeichert, damit nur beim allerersten Mal gesucht wird.
-function haltestelle(name, callback) {
+// Haltestellen-ID ermitteln. Normalerweise bringt die Haltestelle aus den
+// Einstellungen ihre Transitous-ID schon mit (Vorschlagssuche). Nur wenn sie
+// fehlt (z. B. später bei einer Haltestelle aus Geofox), suchen wir nach dem
+// Namen und merken uns das Ergebnis im localStorage des Handys.
+function haltestelle(halt, callback) {
+	if (halt.id) { callback(null, halt); return; }
+	var name = halt.name;
 	var schluessel = "transitous_halt_" + name;
 	var gespeichert = localStorage.getItem(schluessel);
 	if (gespeichert) {
@@ -89,13 +93,13 @@ function teilstueck(leg) {
 }
 
 // Verbindungen suchen.
-//   vonName, nachName  Haltestellennamen aus konfig.js
+//   vonHalt, nachHalt  Haltestellen aus den Einstellungen: { id, name, … }
 //   abZeit             Date: frühester Abfahrtszeitpunkt
 //   callback(fehler, verbindungen)  – Liste von { teile: [...] }
-function suche(vonName, nachName, abZeit, callback) {
-	haltestelle(vonName, function (fehler, von) {
+function suche(vonHalt, nachHalt, abZeit, callback) {
+	haltestelle(vonHalt, function (fehler, von) {
 		if (fehler) { callback(fehler); return; }
-		haltestelle(nachName, function (fehler, nach) {
+		haltestelle(nachHalt, function (fehler, nach) {
 			if (fehler) { callback(fehler); return; }
 			var pfad = "/v6/plan" +
 				"?fromPlace=" + encodeURIComponent(von.id) +

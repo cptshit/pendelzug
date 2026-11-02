@@ -5,6 +5,8 @@
 Watchapp für die **Pebble Time 2**. Sie zeigt auf einen Blick, ob die
 Bahnverbindung Halstenbek ⇄ Itzehoe pünktlich ist und ob die Umstiege klappen.
 
+**Im Pebble-Store (nicht gelistet, nur per Link):** <https://apps.repebble.com/b7e5b4b47e684f52b75448df>
+
 > **Version 1.0.0.** **Stand:** Schritt 5 – echte Verbindungen (Transitous), Einstellungsseite,
 > Automatik mit Wakeup und Vibration. Als Nächstes: Umstellung auf hvv Geofox.
 

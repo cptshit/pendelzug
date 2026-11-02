@@ -1,5 +1,8 @@
 # Pendelzug – Angaben für den Pebble-Store
 
+Veröffentlicht am 02.11.2026. Neue Versionen im Developer Dashboard über
+**New Release** hochladen (Version in package.json vorher erhöhen).
+
 Zum Kopieren in das Formular im Developer Dashboard
 (<https://developer.repebble.com/dashboard> → **New**).
 
@@ -14,6 +17,7 @@ Zum Kopieren in das Formular im Developer Dashboard
 | Website URL | https://github.com/cptshit/pendelzug |
 | Source Code URL | https://github.com/cptshit/pendelzug |
 | App visibility | **Unlisted** (nur per Link installierbar) |
+| Store-Seite | <https://apps.repebble.com/b7e5b4b47e684f52b75448df> (App-ID b7e5b4b47e684f52b75448df) |
 
 ## Description
 

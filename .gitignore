@@ -27,3 +27,6 @@ secrets*
 *.swp
 *~
 .DS_Store
+
+# Arbeitsanweisungen für Claude Code – bleiben nur lokal
+CLAUDE.md

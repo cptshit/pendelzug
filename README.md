@@ -3,18 +3,26 @@
 Watchapp für die **Pebble Time 2**. Sie zeigt auf einen Blick, ob die
 Bahnverbindung Halstenbek ⇄ Itzehoe pünktlich ist und ob die Umstiege klappen.
 
-> **Stand:** Schritt 1 – Ansicht A mit fest eingebauten Testdaten.
+> **Stand:** Schritt 2 – Ansichten A, B und C mit fest eingebauten Testdaten.
 > Echte Verbindungsdaten folgen in Schritt 3.
+
+**Ansicht A – Liste** (Standard), in den drei Test-Zuständen:
 
 ![Ansicht A, Zustand „pünktlich“](screenshots/zustand1.png)
 ![Ansicht A, Zustand „Umstieg knapp“](screenshots/zustand2.png)
 ![Ansicht A, Zustand „Anschluss weg“](screenshots/zustand3.png)
 
+**Ansicht B – Ankunft groß** und **Ansicht C – Nächster Schritt**:
+
+![Ansicht B](screenshots/ansicht_b.png)
+![Ansicht C](screenshots/ansicht_c.png)
+
 ## Bedienung
 
-| Taste | Funktion (Schritt 1) |
+| Taste | Funktion (Testbetrieb, Schritt 2) |
 |---|---|
 | Auf / Ab | zwischen den drei Test-Zuständen blättern |
+| Select | nächste Ansicht (A → B → C); ab Schritt 4 wird die Ansicht in den Einstellungen gewählt |
 | Zurück | App schließen |
 
 ## Technik
@@ -70,8 +78,8 @@ Hängt der Emulator: `./pebble.sh kill`, dann `./pebble.sh wipe`, dann neu insta
 ## Projektaufbau
 
 ```
-src/embeddedjs/main.js        Uhr-Code: Ansicht A (Piu)
-src/embeddedjs/testdaten.js   drei Beispiel-Verbindungen (nur Schritt 1)
+src/embeddedjs/main.js        Uhr-Code: Ansichten A, B, C (Piu)
+src/embeddedjs/testdaten.js   drei Beispiel-Verbindungen (bis Schritt 3)
 src/embeddedjs/manifest.json  Liste der JavaScript-Module der Uhr
 src/pkjs/index.js             Handy-Code (PKJS), später Verbindungssuche
 src/c/mdbl.c                  startet JavaScript auf der Uhr (Speichergrößen)

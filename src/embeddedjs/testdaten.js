@@ -9,6 +9,7 @@
 //
 // Aufbau einer Verbindung:
 //   richtung   Text für die Kopfzeile
+//   ziel       Zielbahnhof, z. B. für „Ankunft Itzehoe“ (Ansicht B)
 //   ampel      "gruen" | "gelb" | "rot" (Farbe des Statusbands)
 //   status     Text im Statusband (Farbe nie allein, immer auch Text)
 //   teile      Liste der Teilstücke, in Fahrtreihenfolge:
@@ -27,6 +28,9 @@
 //   stand      Uhrzeit der letzten Aktualisierung "HH:MM"
 //   quelle     Name der Datenquelle für den Hinweis „Daten: … · ohne Gewähr“
 //              (setzt später der Adapter in PKJS: „Transitous“, ab Geofox „hvv“)
+//   jetzt      NUR IN DEN TESTDATEN: feste Uhrzeit „HH:MM“, mit der Countdowns
+//              gerechnet werden, damit sie zu den ausgedachten Fahrzeiten passen.
+//              Ohne dieses Feld (ab Schritt 3) nimmt die App die echte Uhrzeit.
 //
 // Die Fahrzeiten sind ausgedacht und stimmen nicht mit dem echten Fahrplan überein.
 
@@ -37,6 +41,7 @@ export default [
 	// 1) Alles pünktlich, ein Umstieg mit viel Puffer
 	{
 		richtung: "Halstenbek → Itzehoe",
+		ziel: "Itzehoe",
 		ampel: "gruen",
 		status: "PÜNKTLICH",
 		teile: [
@@ -46,10 +51,12 @@ export default [
 		ankunft: { plan: "07:58", versp: 0 },
 		quelle: "Transitous",
 		stand: "07:05",
+		jetzt: "07:06",   // vor der Abfahrt der S3
 	},
 	// 2) S3 verspätet, dadurch wird der erste Umstieg knapp
 	{
 		richtung: "Halstenbek → Itzehoe",
+		ziel: "Itzehoe",
 		ampel: "gelb",
 		status: "UMSTIEG KNAPP",
 		teile: [
@@ -59,11 +66,13 @@ export default [
 		],
 		ankunft: { plan: "07:58", versp: 1 },
 		quelle: "Transitous",
-		stand: "07:08",
+		stand: "07:16",
+		jetzt: "07:17",   // schon in der S3, Umstieg in Pinneberg steht bevor
 	},
 	// 3) S3 stark verspätet, der Anschluss nach dem Fußweg ist weg
 	{
 		richtung: "Halstenbek → Itzehoe",
+		ziel: "Itzehoe",
 		ampel: "rot",
 		status: "ANSCHLUSS WEG",
 		teile: [
@@ -74,5 +83,6 @@ export default [
 		ankunft: { plan: "07:58", versp: 0 },
 		quelle: "Transitous",
 		stand: "07:21",
+		jetzt: "07:22",   // S3 fährt wegen Verspätung erst 07:24
 	},
 ];

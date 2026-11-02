@@ -35,6 +35,7 @@
 import Message from "pebble/message";
 import WakeUp from "pebble/wakeup";
 import Vibes from "pebble/vibes";
+import Timer from "timer";
 import testdaten from "testdaten";
 import { aktuellesFenster, naechsteStarts, vibration, COOKIE_HIN } from "automatik";
 
@@ -773,11 +774,36 @@ class PendelzugBehavior {
 		this.zeige();
 		this.sendeWartende();
 	}
+	// Senden kann fehlschlagen, wenn der Sendepuffer noch belegt ist – auf der
+	// echten Uhr z. B. direkt nach dem Start, weil die Uhr sich da gerade beim
+	// Handy als „bereit“ meldet. write() wirft dann „output_begin failed“.
+	// Ohne try/catch bricht Alloy die ganze App ab („Alloy: Fatal Error“).
+	// Deshalb: Anfrage vorgemerkt lassen und nach 0,5 s erneut versuchen.
 	sendeWartende() {
 		if (!this.bereit || !this.wartend) return;
 		const text = JSON.stringify(this.wartend);
+		try {
+			this.message.write(new Map([["ANFRAGE", text]]));
+		} catch (e) {
+			this.sendeVersuche = (this.sendeVersuche || 0) + 1;
+			console.log("Senden fehlgeschlagen (" + e.message + "), Versuch " + this.sendeVersuche);
+			if (this.sendeVersuche >= 10) {
+				this.sendeVersuche = 0;
+				this.wartend = null;
+				abfrageStatus = "Senden an das Handy fehlgeschlagen";
+				this.zeige();
+				return;
+			}
+			if (!this.wiederholung) {
+				this.wiederholung = Timer.set(() => {
+					this.wiederholung = null;
+					this.sendeWartende();
+				}, 500);
+			}
+			return;
+		}
 		console.log("Anfrage ans Handy: " + text);
-		this.message.write(new Map([["ANFRAGE", text]]));
+		this.sendeVersuche = 0;
 		this.wartend = null;
 	}
 

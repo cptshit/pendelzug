@@ -12,6 +12,14 @@
 //   Select lang  Richtung umschalten (Hinweg ⇄ Rückweg)
 //   Zurück       App schließen
 //
+// Automatik (Einstellungen „Automatik Hinweg/Rückweg“):
+//   - Zum Fensteranfang startet die Uhr die App per Wakeup.
+//   - Solange ein Fenster läuft und die App offen ist: alle 2 Minuten neu laden.
+//   - Vibration nur im Fenster, nur bei automatischen Abfragen, nur bei
+//     Verspätung, Ausfall oder verpasstem Anschluss – pro Problem einmal,
+//     erneut nur, wenn es schlimmer wird (Regeln in automatik.js).
+//   - Am Fensterende schließt sich die App, wenn die Automatik sie gestartet hat.
+//
 // Testbetrieb (TESTBETRIEB = true weiter unten): feste Testdaten wie in
 // Schritt 2. Dann blättern Auf/Ab durch die Test-Zustände und Select
 // wechselt die Ansicht (A → B → C).
@@ -25,7 +33,10 @@
 // Bildschirm der Pebble Time 2 (emery): 200 × 228 Pixel, 64 Farben.
 
 import Message from "pebble/message";
+import WakeUp from "pebble/wakeup";
+import Vibes from "pebble/vibes";
 import testdaten from "testdaten";
+import { aktuellesFenster, naechsteStarts, vibration, COOKIE_HIN } from "automatik";
 
 // true = feste Testdaten statt echter Verbindungen (zum Prüfen der Ansichten)
 const TESTBETRIEB = false;
@@ -640,10 +651,22 @@ class PendelzugBehavior {
 			return;
 		}
 
-		// Richtung nach Tageszeit: vormittags Hinweg, ab 12 Uhr Rückweg
-		this.richtung = new Date().getHours() < 12 ? "hin" : "rueck";
+		// Richtung: Hat ein Wakeup die App gestartet, gilt dessen Fenster.
+		// Sonst: läuft gerade ein Fenster, dessen Richtung; sonst nach Tageszeit
+		// (vormittags Hinweg, ab 12 Uhr Rückweg).
+		const fenster = aktuellesFenster(einstellungen, new Date());
+		this.vonAutomatik = !!watch.wake;
+		if (watch.wake) {
+			this.richtung = watch.wake.cookie === COOKIE_HIN ? "hin" : "rueck";
+			console.log("Von der Automatik gestartet: " + this.richtung);
+		} else if (fenster) {
+			this.richtung = fenster.richtung;
+		} else {
+			this.richtung = new Date().getHours() < 12 ? "hin" : "rueck";
+		}
 		this.ladeGespeichert();
 		this.zeige();
+		this.planeWakeups();
 
 		// Verbindung zum Handy. Die Schlüssel müssen zu package.json passen.
 		// onWritable: jetzt darf gesendet werden; onSuspend: gerade nicht.
@@ -655,10 +678,79 @@ class PendelzugBehavior {
 			onWritable: () => { this.bereit = true; this.sendeWartende(); },
 			onSuspend: () => { this.bereit = false; },
 		});
-		this.frage(0, true);
+		this.frage(0, true, !!this.imFenster());
 
-		// Jede Minute neu zeichnen, damit Countdowns stimmen
-		watch.addEventListener("minutechange", () => this.zeige());
+		// Jede Minute: neu zeichnen (Countdowns), im Fenster alle 2 Minuten neu laden
+		this.minuten = 0;
+		watch.addEventListener("minutechange", () => this.jedeMinute());
+
+		// Wakeup, während die App schon offen ist (z. B. Fensteranfang)
+		watch.addEventListener("wakeup", (wake) => {
+			console.log("Wakeup während die App läuft");
+			this.vonAutomatik = true;
+			this.richtung = wake.cookie === COOKIE_HIN ? "hin" : "rueck";
+			this.ladeGespeichert();
+			this.frage(0, true, true);
+			this.planeWakeups();
+		});
+	}
+
+	// Läuft gerade das Fenster der angezeigten Richtung? → { richtung, ende } oder null
+	imFenster() {
+		const f = aktuellesFenster(einstellungen, new Date());
+		return f && f.richtung === this.richtung ? f : null;
+	}
+
+	jedeMinute() {
+		this.minuten++;
+		const fenster = this.imFenster();
+		if (!fenster && this.vonAutomatik) {
+			// Fenster vorbei: Die Automatik hat die App geöffnet, also schließt sie sie auch.
+			console.log("Automatik-Fenster vorbei, App wird geschlossen");
+			watch.exit();
+			return;
+		}
+		if (fenster && this.minuten % 2 === 0) this.frage(0, true, true);
+		else this.zeige();
+	}
+
+	// Wakeups für die nächsten Fensteranfänge planen (alte vorher löschen).
+	// Pebble erlaubt keine zwei Wakeups innerhalb einer Minute (auch nicht von
+	// anderen Apps). Klappt es nicht, versuchen wir es bis zu 3 Minuten später.
+	planeWakeups() {
+		let alte = [];
+		try { alte = JSON.parse(localStorage.getItem("wakeups")) || []; } catch { alte = []; }
+		alte.forEach(id => WakeUp.cancel(id));
+
+		const neue = [];
+		naechsteStarts(einstellungen, new Date()).forEach(start => {
+			for (let versuch = 0; versuch < 4; versuch++) {
+				const zeit = start.zeit + versuch * 60000;
+				const id = WakeUp.schedule(zeit, start.cookie, false);
+				if (id > 0) {
+					neue.push(id);
+					console.log("Wakeup geplant: " + new Date(zeit).toString() + " (Cookie " + start.cookie + ", id " + id + ")");
+					break;
+				}
+				console.log("Wakeup " + new Date(zeit).toString() + " abgelehnt (" + id + ")");
+			}
+		});
+		localStorage.setItem("wakeups", JSON.stringify(neue));
+	}
+
+	// Nach einer automatischen Abfrage: Muss die Uhr vibrieren?
+	pruefeVibration() {
+		let gemerkt = null;
+		try { gemerkt = JSON.parse(localStorage.getItem("vibriert")); } catch { gemerkt = null; }
+		const ergebnis = vibration(this.daten, gemerkt);
+		localStorage.setItem("vibriert", JSON.stringify(ergebnis.gemerkt));
+		if (ergebnis.muster === "problem") {
+			console.log("Vibration: Problem (" + this.daten.status + ")");
+			Vibes.longPulse();
+		} else if (ergebnis.muster === "verspaetet") {
+			console.log("Vibration: Verspätung +" + this.daten.ankunft.versp);
+			Vibes.doublePulse();
+		}
 	}
 
 	// Letztes Ergebnis für die aktuelle Richtung aus dem Speicher der Uhr holen
@@ -673,7 +765,9 @@ class PendelzugBehavior {
 	// Anfrage ans Handy vormerken und senden, sobald möglich
 	//   schritt  -1 frühere, 0 dieselbe (gemerkte), +1 spätere Verbindung
 	//   neu      true = Handy soll neu abfragen statt den Zwischenspeicher zu nehmen
-	frage(schritt, neu) {
+	//   auto     true = automatische Abfrage im Fenster (darf vibrieren)
+	frage(schritt, neu, auto) {
+		this.autoAbfrage = !!auto;
 		this.wartend = { richtung: this.richtung, schritt, neu };
 		abfrageStatus = "laedt";
 		this.zeige();
@@ -702,6 +796,10 @@ class PendelzugBehavior {
 			this.fehlerText = null;
 			// Zuletzt angezeigte Verbindung merken (wird beim nächsten Start sofort gezeigt)
 			localStorage.setItem("letzte_" + this.richtung, text);
+			if (this.autoAbfrage) {
+				this.autoAbfrage = false;
+				this.pruefeVibration();
+			}
 			console.log("Verbindung erhalten: " + this.daten.status);
 		}
 		if (antwort.has("EINSTELLUNGEN")) {
@@ -711,7 +809,10 @@ class PendelzugBehavior {
 				einstellungen = { ...STANDARD_EINSTELLUNGEN, ...neu };
 				localStorage.setItem("einstellungen", JSON.stringify(einstellungen));
 				KNAPP_AB_MINUTEN = einstellungen.knapp;
-				if (!TESTBETRIEB) this.ansicht = einstellungen.ansicht;
+				if (!TESTBETRIEB) {
+					this.ansicht = einstellungen.ansicht;
+					this.planeWakeups();   // Fenster können sich geändert haben
+				}
 				console.log("Einstellungen erhalten: Ansicht " + einstellungen.ansicht + ", knapp " + einstellungen.knapp);
 				// Neue Mindest-Umstiegszeit ändert auch die Ampel → Verbindung neu aufbereiten lassen
 				if (knappGeaendert && !TESTBETRIEB) this.frage(0, false);

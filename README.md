@@ -3,8 +3,8 @@
 Watchapp für die **Pebble Time 2**. Sie zeigt auf einen Blick, ob die
 Bahnverbindung Halstenbek ⇄ Itzehoe pünktlich ist und ob die Umstiege klappen.
 
-> **Stand:** Schritt 4 – echte Verbindungen (Transitous) und Einstellungsseite.
-> Automatischer Start, Aktualisierung und Vibration folgen in Schritt 5.
+> **Stand:** Schritt 5 – echte Verbindungen (Transitous), Einstellungsseite,
+> Automatik mit Wakeup und Vibration. Als Nächstes: Umstellung auf hvv Geofox.
 
 Echte Verbindung im Emulator (Transitous, 02.11.2026):
 
@@ -44,6 +44,24 @@ die App feste Testdaten. Dann blättern Auf/Ab durch vier Test-Zustände
 (pünktlich, Umstieg knapp, Anschluss weg, Warten am Umstieg) und Select wechselt
 die Ansicht (A → B → C).
 
+## Automatik
+
+- **Start:** Zum Anfang eines Automatik-Fensters öffnet die Uhr Pendelzug von
+  selbst (Wakeup) und zeigt die Richtung dieses Fensters.
+- **Aktualisierung:** Solange ein Fenster läuft und die App offen ist, lädt sie
+  alle 2 Minuten neu – auch wenn du sie selbst geöffnet hast.
+- **Vibration** nur im Fenster und nur bei automatischen Abfragen:
+  - zweimal kurz: Verspätung am Ziel
+  - einmal lang: Ausfall oder Anschluss verpasst
+
+  Pro Problem nur einmal. Erneut nur, wenn es schlimmer wird (Ausfall statt
+  Verspätung, oder mindestens 5 Minuten mehr Verspätung). Ein nur knapper
+  Umstieg vibriert nicht.
+- **Ende:** Hat die Automatik die App geöffnet, schließt sie sich am
+  Fensterende wieder.
+- Schließt du die App im Fenster, bleibt sie zu. (Alloy-Apps können nicht im
+  Hintergrund laufen; ein Wakeup öffnet die App immer sichtbar.)
+
 ## Einstellungen
 
 In der Pebble-App auf dem Handy über das Zahnrad bei Pendelzug:
@@ -51,7 +69,7 @@ In der Pebble-App auf dem Handy über das Zahnrad bei Pendelzug:
 - **Ansicht:** A – Liste (Standard), B – Ankunft groß, C – Nächster Schritt
 - **Mindest-Umstiegszeit:** 1–10 Minuten (Standard 3)
 - **Automatik Hinweg / Rückweg:** an/aus, Wochentage, Zeitfenster
-  (Standard: Hinweg Mo–Fr 07:00–09:00, Rückweg aus). Wirkt ab Schritt 5.
+  (Standard: Hinweg Mo–Fr 07:00–09:00, Rückweg aus), siehe unten.
 - **Geofox-Benutzer und -Passwort:** bleiben auf dem Handy, werden nie an die
   Uhr geschickt; werden erst mit der Umstellung auf Geofox benutzt.
 
@@ -138,6 +156,7 @@ Hängt der Emulator: `./pebble.sh kill`, dann `./pebble.sh wipe`, dann neu insta
 ```
 src/embeddedjs/main.js        Uhr-Code: Ansichten A, B, C (Piu)
 src/embeddedjs/testdaten.js   vier Beispiel-Verbindungen für den Testbetrieb
+src/embeddedjs/automatik.js   Regeln für Automatik-Fenster und Vibration
 src/embeddedjs/manifest.json  Liste der JavaScript-Module der Uhr
 src/pkjs/index.js             Handy-Code (PKJS): Anfragen der Uhr beantworten
 src/pkjs/konfig.js            Haltestellen, Kontakt für Transitous

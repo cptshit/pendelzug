@@ -6,7 +6,8 @@
 	"modules": {
 		"*": [
 			"./main",
-			"./testdaten"
+			"./testdaten",
+			"./automatik"
 		]
 	}
 }

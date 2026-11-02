@@ -3,8 +3,12 @@
 Watchapp für die **Pebble Time 2**. Sie zeigt auf einen Blick, ob die
 Bahnverbindung Halstenbek ⇄ Itzehoe pünktlich ist und ob die Umstiege klappen.
 
-> **Stand:** Schritt 3 (in Arbeit) – Verbindungen kommen vom Handy (Transitous).
+> **Stand:** Schritt 3 – echte Verbindungen vom Handy (Transitous).
 > Bis zur Einstellungsseite (Schritt 4) zeigt die Uhr immer Ansicht A.
+
+Echte Verbindung im Emulator (Transitous, 02.11.2026):
+
+![Ansicht A mit echten Daten](screenshots/live_transitous.png)
 
 **Ansicht A – Liste** (Standard), in drei der vier Test-Zustände:
 
@@ -27,7 +31,13 @@ Bahnverbindung Halstenbek ⇄ Itzehoe pünktlich ist und ob die Umstiege klappen
 | Zurück | App schließen |
 
 Die Richtung wird beim Start nach der Tageszeit gewählt: vormittags Hinweg,
-ab 12 Uhr Rückweg.
+ab 12 Uhr Rückweg. Beim Öffnen zeigt die App die zuletzt angesehene
+Verbindung, solange sie noch unterwegs ist (z. B. nach dem Einsteigen),
+sonst die nächste.
+
+**Umstiegszeit** = Zeit von der Ankunft des einen bis zur Abfahrt des nächsten
+Zugs, ein Fußweg dazwischen zählt mit. Höchstens 3 Minuten gelten als „knapp“,
+negativ als „verpasst“.
 
 **Testbetrieb:** Steht in `src/embeddedjs/main.js` `TESTBETRIEB = true`, zeigt
 die App feste Testdaten. Dann blättern Auf/Ab durch vier Test-Zustände

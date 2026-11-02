@@ -1,9 +1,9 @@
 // index.js – Handy-Teil (PebbleKit JS) von Pendelzug.
 //
 // Ablauf:
-//   1. Die Uhr schickt eine ANFRAGE (JSON): { richtung: "hin"|"rueck", nr, neu }
-//        nr  0 = nächste erreichbare Verbindung, -1 = eine frühere, +1 = eine spätere …
-//        neu true = auf jeden Fall neu abfragen (Taste Select)
+//   1. Die Uhr schickt eine ANFRAGE (JSON): { richtung: "hin"|"rueck", schritt, neu }
+//        schritt  0 = gemerkte Verbindung (siehe unten), -1 = eine frühere, +1 = eine spätere
+//        neu      true = auf jeden Fall neu abfragen (Taste Select)
 //   2. Wir fragen die Datenquelle (Adapter) ab – oder nehmen das Ergebnis
 //      aus dem Zwischenspeicher, wenn es jünger als CACHE_SEKUNDEN ist.
 //   3. Wir schicken der Uhr VERBINDUNG (JSON, Format wie testdaten.js)
@@ -31,6 +31,20 @@ function sendeFehler(text) {
 }
 
 // Aus den gefundenen Verbindungen die gewünschte auswählen und senden.
+function ersterZug(verbindung) {
+	return verbindung.teile.filter(function (t) { return t.art === "zug"; })[0];
+}
+
+// Eindeutige Kennung einer Verbindung: Linie und Plan-Abfahrt ALLER Züge.
+// (Nur der erste Zug reicht nicht: Mit demselben RE6 gibt es oft zwei
+// Verbindungen, z. B. über Elmshorn und über Altona.)
+function kennung(verbindung) {
+	return verbindung.teile
+		.filter(function (t) { return t.art === "zug"; })
+		.map(function (z) { return z.linie + "@" + z.planAb; })
+		.join("|");
+}
+
 function antworte(anfrage) {
 	var jetzt = Date.now();
 	// Nur Verbindungen, die noch nicht angekommen sind
@@ -40,15 +54,26 @@ function antworte(anfrage) {
 	});
 	if (!liste.length) { sendeFehler("Keine Verbindung gefunden"); return; }
 
-	// nr 0 = erste Verbindung, deren erster Zug noch nicht abgefahren ist.
-	// Frühere (nr < 0) sind solche, die schon unterwegs sind.
+	// „Nächste“ Verbindung = erste, deren erster Zug noch nicht abgefahren ist.
+	// Frühere sind solche, die schon unterwegs sind.
 	var basis = 0;
 	while (basis < liste.length - 1) {
-		var erster = liste[basis].teile.filter(function (t) { return t.art === "zug"; })[0];
-		if (erster.istAb >= jetzt) break;
+		if (ersterZug(liste[basis]).istAb >= jetzt) break;
 		basis++;
 	}
-	var index = Math.max(0, Math.min(liste.length - 1, basis + (anfrage.nr || 0)));
+
+	// Gemerkte Verbindung: die zuletzt angezeigte, solange sie noch unterwegs
+	// ist (sie steht dann noch in der Liste). So sieht man nach dem Einsteigen
+	// weiter „seine“ Verbindung und nicht schon die nächste. Ist sie
+	// angekommen oder unbekannt, gilt die nächste Verbindung.
+	var schluessel = "gemerkt_" + anfrage.richtung;
+	var gemerkt = localStorage.getItem(schluessel);
+	var start = basis;
+	for (var i = 0; i < liste.length; i++) {
+		if (kennung(liste[i]) === gemerkt) { start = i; break; }
+	}
+	var index = Math.max(0, Math.min(liste.length - 1, start + (anfrage.schritt || 0)));
+	localStorage.setItem(schluessel, kennung(liste[index]));
 
 	var hin = anfrage.richtung !== "rueck";
 	var paket = aufbereitung.paket(liste, index, {
@@ -56,7 +81,7 @@ function antworte(anfrage) {
 			: konfig.HALTESTELLE_B + " → " + konfig.HALTESTELLE_A,
 		ziel: hin ? konfig.HALTESTELLE_B : konfig.HALTESTELLE_A,
 		quelle: quelle.name,
-		nr: index - basis,
+		nr: index - basis,   // 0 = nächste, negativ = schon unterwegs, positiv = später
 	});
 	var text = JSON.stringify(paket);
 	console.log("Paket für die Uhr: " + text.length + " Zeichen");

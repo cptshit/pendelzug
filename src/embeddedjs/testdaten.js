@@ -37,7 +37,8 @@
 //
 // Die Fahrzeiten sind ausgedacht und stimmen nicht mit dem echten Fahrplan überein.
 // Die Umstiegszeiten passen aber rechnerisch zu den Ankunfts- und Abfahrtszeiten:
-// Umstieg = Ist-Abfahrt des nächsten Zugs − Ist-Ankunft des vorigen − Fußweg.
+// Umstieg = Ist-Abfahrt des nächsten Zugs − Ist-Ankunft des vorigen
+// (ein Fußweg dazwischen zählt mit hinein, wie in src/pkjs/aufbereitung.js).
 
 const S3 = "#AA00AA";     // Platzhalter-Farbe S-Bahn
 const REGIO = "#555555";  // Platzhalter-Farbe Regionalzüge
@@ -81,14 +82,14 @@ export default [
 		ampel: "rot",
 		status: "ANSCHLUSS WEG",
 		teile: [
-			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 12, ab: "Halstenbek", gleis: "1", an: "07:28", anVersp: 12, umstieg: null },
+			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 16, ab: "Halstenbek", gleis: "1", an: "07:28", anVersp: 16, umstieg: null },
 			{ art: "fuss", dauer: 4 },
 			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: -3 },
 		],
 		ankunft: { plan: "07:58", versp: 0, ersatz: "08:21" },
 		quelle: "Transitous",
 		stand: "07:21",
-		jetzt: "07:22",   // S3 fährt wegen Verspätung erst 07:24
+		jetzt: "07:22",   // S3 fährt wegen Verspätung erst 07:28
 	},
 	// 4) Warten am Umstieg: S3 ist schon in Pinneberg angekommen, die RB71 kommt gleich
 	{

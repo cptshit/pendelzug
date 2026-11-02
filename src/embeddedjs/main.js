@@ -199,12 +199,14 @@ function umstiegFarbe(min) {
 function zweiteZeile(teil) {
 	if (!hatUmstieg(teil))
 		return { text: "ab " + teil.ab, farbe: FARBE.grau };
+	// In 14 px passen etwa 26 Zeichen auf die Zeile. Bei langen Ortsnamen
+	// (z. B. „Hamburg-Altona“) lassen wir deshalb das Wort „Umstieg“ weg.
+	const kurz = text => text.length > 26 ? text.replace("Umstieg ", "") : text;
 	if (teil.umstieg < 0)
-		return { text: "Umstieg " + teil.ab + ": verpasst", farbe: FARBE.problem };
+		return { text: kurz("Umstieg " + teil.ab + ": verpasst"), farbe: FARBE.problem };
 	if (teil.umstieg <= KNAPP_AB_MINUTEN)
-		// kürzer formuliert, damit es in 14 px auf die Zeile passt (ca. 27 Zeichen)
 		return { text: teil.ab + ": knapp, " + teil.umstieg + " Min", farbe: FARBE.verspaetet };
-	return { text: "Umstieg " + teil.ab + ": " + teil.umstieg + " Min", farbe: FARBE.grau };
+	return { text: kurz("Umstieg " + teil.ab + ": " + teil.umstieg + " Min"), farbe: FARBE.grau };
 }
 
 // Zusatz zur Ankunftszeit: „+1“, bei Rot „verpasst“.
@@ -371,13 +373,36 @@ function FussZeile(teil) {
 //   Statusband
 //   Teilstücke, untereinander (Column stapelt automatisch)
 //   Fußbereich: Ankunft, „Stand“, Quellenhinweis
+// Platz für die Teilstücke in Ansicht A (Pixel): zwischen Statusband und Fußbereich
+const PLATZ_A = 228 - MASS.fussLinie - (MASS.kopf + MASS.band + 2) - 1;
+const HOEHE_FUSS = 24, HOEHE_WEITERE = 20;
+
 function AnsichtA(verbindung) {
+	// Passt alles auf den Bildschirm? Sonst zuerst die Fußweg-Zeilen weglassen
+	// (die Umstiegszeit steht ja weiter beim nächsten Zug), und wenn es dann
+	// immer noch nicht passt, nur die ersten Züge zeigen plus „+ N weitere“.
+	const hoehe = liste => liste.reduce((h, t, i) => h + (i ? 1 : 0) + (t.art === "fuss" ? HOEHE_FUSS : MASS.zug), 0);
+	let teile = verbindung.teile;
+	if (hoehe(teile) > PLATZ_A) teile = teile.filter(t => t.art !== "fuss");
+	let weitere = 0;
+	if (hoehe(teile) > PLATZ_A) {
+		// hinten so lange Teilstücke weglassen, bis sie samt „+ N weitere“-Zeile passen
+		while (teile.length > 1 && hoehe(teile) + 1 + HOEHE_WEITERE > PLATZ_A) {
+			teile = teile.slice(0, -1);
+			weitere++;
+		}
+	}
+
 	// Teilstücke mit Trennlinien dazwischen
 	const zeilen = [];
-	verbindung.teile.forEach((teil, i) => {
+	teile.forEach((teil, i) => {
 		if (i > 0) zeilen.push(Trennlinie());
 		zeilen.push(teil.art === "fuss" ? FussZeile(teil) : ZugZeile(teil));
 	});
+	if (weitere) {
+		zeilen.push(Trennlinie());
+		zeilen.push(new Label(null, { left: 50, right: 4, height: HOEHE_WEITERE, style: fussStyle, string: "+ " + weitere + " weitere" }));
+	}
 
 	return Bildschirm([
 		new Label(null, { left: 0, right: 0, top: 0, height: MASS.kopf, style: kopfStyle, string: verbindung.richtung }),
@@ -570,10 +595,21 @@ const ANSICHTEN = { A: AnsichtA, B: AnsichtB, C: AnsichtC };
 const ANSICHT_REIHENFOLGE = ["A", "B", "C"];
 
 class PendelzugBehavior {
+	// onCreate läuft noch innerhalb des Application-Konstruktors, der
+	// JavaScript-Aufrufstapel ist dort schon tief. Eine ganze Ansicht hier
+	// aufzubauen führte zu „JavaScript stack overflow“. Deshalb merken wir uns
+	// hier nur die Application und starten erst in onDisplaying, das Piu
+	// aufruft, sobald die Application angezeigt wird.
 	onCreate(application) {
 		this.application = application;
+	}
+	onDisplaying(application) {
+		if (this.gestartet) return;
+		this.gestartet = true;
+		this.starte();
+	}
+	starte() {
 		this.ansicht = "A";        // Standard-Ansicht laut CLAUDE.md (wählbar ab Schritt 4)
-		this.nr = 0;               // 0 = nächste erreichbare Verbindung, -1 früher, +1 später
 		this.daten = null;         // angezeigte Verbindung (Format wie testdaten.js)
 		this.fehlerText = null;    // letzter Fehler (für den Meldungs-Bildschirm)
 
@@ -599,7 +635,7 @@ class PendelzugBehavior {
 			onWritable: () => { this.bereit = true; this.sendeWartende(); },
 			onSuspend: () => { this.bereit = false; },
 		});
-		this.frage(true);
+		this.frage(0, true);
 
 		// Jede Minute neu zeichnen, damit Countdowns stimmen
 		watch.addEventListener("minutechange", () => this.zeige());
@@ -615,8 +651,10 @@ class PendelzugBehavior {
 	}
 
 	// Anfrage ans Handy vormerken und senden, sobald möglich
-	frage(neu) {
-		this.wartend = { richtung: this.richtung, nr: this.nr, neu };
+	//   schritt  -1 frühere, 0 dieselbe (gemerkte), +1 spätere Verbindung
+	//   neu      true = Handy soll neu abfragen statt den Zwischenspeicher zu nehmen
+	frage(schritt, neu) {
+		this.wartend = { richtung: this.richtung, schritt, neu };
 		abfrageStatus = "laedt";
 		this.zeige();
 		this.sendeWartende();
@@ -640,11 +678,10 @@ class PendelzugBehavior {
 				console.log("Antwort nicht lesbar");
 				return;
 			}
-			this.nr = this.daten.nr;
 			abfrageStatus = null;
 			this.fehlerText = null;
-			// Nur die „nächste“ Verbindung als letztes Ergebnis merken
-			if (this.nr === 0) localStorage.setItem("letzte_" + this.richtung, text);
+			// Zuletzt angezeigte Verbindung merken (wird beim nächsten Start sofort gezeigt)
+			localStorage.setItem("letzte_" + this.richtung, text);
 			console.log("Verbindung erhalten: " + this.daten.status);
 		}
 		if (antwort.has("FEHLER")) {
@@ -675,8 +712,7 @@ class PendelzugBehavior {
 			this.daten = testdaten[this.testIndex];
 			this.zeige();
 		} else {
-			this.nr--;
-			this.frage(false);
+			this.frage(-1, false);
 		}
 		return true;
 	}
@@ -687,8 +723,7 @@ class PendelzugBehavior {
 			this.daten = testdaten[this.testIndex];
 			this.zeige();
 		} else {
-			this.nr++;
-			this.frage(false);
+			this.frage(1, false);
 		}
 		return true;
 	}
@@ -707,12 +742,11 @@ class PendelzugBehavior {
 			this.zeige();
 		} else if (lang) {
 			this.richtung = this.richtung === "hin" ? "rueck" : "hin";
-			this.nr = 0;
 			console.log("Richtung umgeschaltet: " + this.richtung);
 			this.ladeGespeichert();
-			this.frage(true);
+			this.frage(0, true);
 		} else {
-			this.frage(true);
+			this.frage(0, true);
 		}
 		return true;
 	}

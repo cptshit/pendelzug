@@ -10,7 +10,7 @@ module.exports = {
 	VERSION: "0.3.0",
 	// Projekt-Kontaktadresse (E-Mail). Solange sie leer ist, schickt die App
 	// absichtlich KEINE Anfrage an Transitous (Nutzungsbedingungen).
-	KONTAKT: "",
+	KONTAKT: "pendelzug@wortreich.eu",
 
 	// Strecke. Die Haltestellen-IDs sucht der Adapter beim ersten Mal selbst.
 	HALTESTELLE_A: "Halstenbek",

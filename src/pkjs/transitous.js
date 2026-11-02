@@ -67,10 +67,16 @@ function haltestelle(name, callback) {
 // Zeiten als Millisekunden seit 1970 (so kann aufbereitung.js rechnen).
 function teilstueck(leg) {
 	if (leg.mode === "WALK") {
+		// Transitous setzt bei jedem Umstieg einen „Fußweg“ ein, auch innerhalb
+		// desselben Bahnhofs (z. B. Elmshorn → Elmshorn, pauschal 5 Min).
+		// Das ist kein echter Fußweg, sondern eine Umsteigezeit. Wir lassen ihn
+		// weg; die Umstiegszeit ist dann die volle Lücke zwischen den Zügen.
+		if (leg.from.name === leg.to.name) return null;
 		return { art: "fuss", dauer: Math.round(leg.duration / 60) };
 	}
 	return {
 		art: "zug",
+		// Busse bleiben drin: Schienenersatzverkehr fährt als Bus (z. B. „RB60“ als BUS)
 		linie: leg.routeShortName || leg.displayName || leg.tripShortName || "?",
 		planAb: Date.parse(leg.scheduledStartTime),
 		istAb: Date.parse(leg.startTime),
@@ -102,8 +108,8 @@ function suche(vonName, nachName, abZeit, callback) {
 				var verbindungen = (antwort.itineraries || []).map(function (it) {
 					return {
 						teile: it.legs.map(teilstueck).filter(function (t) {
-							// Fußwege unter einer Minute weglassen (z. B. am selben Bahnsteig)
-							return t.art !== "fuss" || t.dauer >= 1;
+							// weggelassene Teilstücke (null) und Fußwege unter einer Minute entfernen
+							return t && (t.art !== "fuss" || t.dauer >= 1);
 						}),
 					};
 				});

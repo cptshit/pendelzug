@@ -20,16 +20,18 @@ function minuten(ms) {
 	return Math.round(ms / 60000);
 }
 
-// Prüft eine Verbindung: Gibt es einen Ausfall oder einen verpassten Umstieg?
-// Wird auch gebraucht, um eine Ersatzverbindung zu finden.
+// Umstiegszeit je Zug (null beim ersten Zug) = Zeit von der Ist-Ankunft des
+// vorigen Zugs bis zur Ist-Abfahrt dieses Zugs. Ein Fußweg dazwischen zählt
+// mit hinein. Grund: Transitous plant Fußwege oft großzügig (z. B. 7 Min
+// Hamburg-Altona → S-Bahn Altona) und lässt danach 0 Min Puffer. Würden wir
+// den Fußweg abziehen, wäre jeder solche Umstieg „knapp“.
 function umstiege(verbindung) {
-	var ergebnis = [];        // Umstiegsminuten je Zug (null beim ersten Zug)
-	var vorigerZug = null, fuss = 0;
+	var ergebnis = [];
+	var vorigerZug = null;
 	verbindung.teile.forEach(function (t) {
-		if (t.art === "fuss") { fuss += t.dauer; return; }
-		ergebnis.push(vorigerZug ? minuten(t.istAb - vorigerZug.istAn) - fuss : null);
+		if (t.art === "fuss") return;
+		ergebnis.push(vorigerZug ? minuten(t.istAb - vorigerZug.istAn) : null);
 		vorigerZug = t;
-		fuss = 0;
 	});
 	return ergebnis;
 }

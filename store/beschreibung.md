@@ -8,7 +8,7 @@ Zum Kopieren in das Formular im Developer Dashboard
 
 | Feld | Inhalt |
 |---|---|
-| Datei (.pbw) | `store/pendelzug-1.0.0.pbw` (Kopie von `build/work.pbw` nach `./pebble.sh build`) |
+| Datei (.pbw) | `store/pendelzug-1.1.0.pbw` (Kopie von `build/work.pbw` nach `./pebble.sh build`) |
 | App Name | Pendelzug |
 | Category | Tools & Utilities |
 | Small Icon (80×80) | `store/icon_80.png` |
@@ -37,6 +37,12 @@ Einstellungen über das Zahnrad in der Pebble-App: Start und Ziel (mit Vorschlag
 Daten: Transitous (https://transitous.org, Quellen: https://transitous.org/sources/), Kartendaten © OpenStreetMap-Mitwirkende. Alle Angaben ohne Gewähr.
 
 Freie Software (GPL-3.0), Quellcode: https://github.com/cptshit/pendelzug
+```
+
+## Release Notes 1.1.0
+
+```
+Start und Ziel sind jetzt in den Einstellungen frei wählbar – mit Vorschlagssuche: ein paar Buchstaben tippen, Haltestelle antippen. Bahnhöfe und Haltestellen in der Nähe stehen oben. Der Rückweg führt umgekehrt.
 ```
 
 ## Release Notes 1.0.0

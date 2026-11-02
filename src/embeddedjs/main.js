@@ -33,9 +33,19 @@ const AMPEL = {
 	rot:   { grund: "#AA0000", schrift: "#FFFFFF" },
 };
 
-// Ab wie vielen Minuten Umstiegszeit gilt ein Umstieg als „knapp“?
-// VORSCHLAG, noch nicht freigegeben: 3 Minuten oder weniger.
+// Mindest-Umstiegszeit in Minuten (freigegeben):
+//   Umstiegszeit ≤ KNAPP_AB_MINUTEN  → „knapp“ (gelb)
+//   Umstiegszeit negativ             → „verpasst“ (rot)
+// Wird später zur Einstellung „Mindest-Umstiegszeit“ auf der Einstellungsseite (Clay).
 const KNAPP_AB_MINUTEN = 3;
+
+// Textfarbe der Fußzeile je Gesamtstatus (Ampel). Die Fußzeile richtet sich
+// immer nach dem Gesamtstatus, nicht nach der Verspätung des letzten Teilstücks.
+const AMPEL_TEXT = {
+	gruen: FARBE.puenktlich,
+	gelb: FARBE.verspaetet,
+	rot: FARBE.problem,
+};
 
 // ---------------------------------------------------------------------------
 // Skins und Styles
@@ -63,7 +73,6 @@ const zeitStyle    = new Style({ font: "bold 24px Gothic", color: FARBE.text, ho
 const gleisStyle   = new Style({ font: "18px Gothic", color: FARBE.grau, horizontal: "right" });
 const badgeStyle   = new Style({ font: "bold 18px Gothic", color: "white", horizontal: "center" });
 const fussStyle    = new Style({ font: "18px Gothic", color: FARBE.grau, horizontal: "left" });
-const ankunftStyle = new Style({ font: "bold 18px Gothic", color: FARBE.text, horizontal: "left" });
 const standStyle   = new Style({ font: "14px Gothic", color: FARBE.grau, horizontal: "right" });
 
 // Styles, deren Farbe sich nach dem Zustand richtet: bei Bedarf einmal
@@ -169,7 +178,11 @@ function AnsichtA(verbindung) {
 	});
 
 	const an = verbindung.ankunft;
-	const anV = verspaetung(an);
+	// Fußzeile: „an 07:58 +1“, bei Rot „an 07:58 verpasst“.
+	// Ab Schritt 3 steht bei Rot die nächste erreichbare Verbindung da,
+	// z. B. „an 08:21 statt 07:58“.
+	const anText = "an " + an.plan + " " +
+		(verbindung.ampel === "rot" ? "verpasst" : "+" + (an.versp || 0));
 
 	return new Container(null, {
 		left: 0, right: 0, top: 0, bottom: 0, skin: weissSkin,
@@ -189,14 +202,10 @@ function AnsichtA(verbindung) {
 
 			// Fußzeile mit Trennlinie darüber
 			new Content(null, { left: 0, right: 0, bottom: 30, height: 1, skin: linieSkin }),
-			// Row setzt die beiden Texte direkt nebeneinander. Labels ohne feste
-			// Breite sind so breit wie ihr Text, deshalb gibt es keine Überlappung.
-			new Row(null, {
-				left: 4, bottom: 4, height: 24,
-				contents: [
-					new Label(null, { style: ankunftStyle, string: "an " + an.plan + " " }),
-					new Label(null, { style: farbStyle("bold 18px Gothic", anV.farbe), string: anV.text }),
-				],
+			// Ganze Zeile in der Farbe des Gesamtstatus
+			new Label(null, {
+				left: 4, right: 70, bottom: 4, height: 24,
+				style: farbStyle("bold 18px Gothic", AMPEL_TEXT[verbindung.ampel]), string: anText,
 			}),
 			new Label(null, { right: 4, bottom: 6, height: 20, style: standStyle, string: "Stand " + verbindung.stand }),
 		],

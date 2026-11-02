@@ -6,7 +6,9 @@
     "pebble-app"
   ],
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "@rebble/clay": "^1.1.0"
+  },
   "pebble": {
     "displayName": "Pendelzug",
     "uuid": "6d5bc2a7-dd24-4440-b8a8-b8246d5824c9",
@@ -22,11 +24,15 @@
     "messageKeys": [
       "ANFRAGE",
       "VERBINDUNG",
-      "FEHLER"
+      "FEHLER",
+      "EINSTELLUNGEN"
     ],
     "resources": {
       "media": []
-    }
+    },
+    "capabilities": [
+      "configurable"
+    ]
   },
   "license": "GPL-3.0-or-later"
 }

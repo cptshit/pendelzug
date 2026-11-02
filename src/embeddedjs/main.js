@@ -4,7 +4,7 @@
 //   A – Liste:            alle Teilstücke untereinander
 //   B – Ankunft groß:     große Ankunftszeit, Strecke als Leiste, nächste Abfahrt
 //   C – Nächster Schritt: „JETZT“ und „DANN“
-// Bis zur Einstellungsseite (Schritt 4) wird immer Ansicht A gezeigt.
+// Welche Ansicht gezeigt wird, steht auf der Einstellungsseite (Standard A).
 //
 // Tasten:
 //   Auf / Ab     frühere / spätere Verbindung
@@ -60,11 +60,31 @@ const AMPEL_TEXT = {
 	rot: FARBE.problem,
 };
 
-// Mindest-Umstiegszeit in Minuten (freigegeben):
-//   Umstiegszeit ≤ KNAPP_AB_MINUTEN  → „knapp“ (gelb)
-//   Umstiegszeit negativ             → „verpasst“ (rot)
-// Wird später zur Einstellung „Mindest-Umstiegszeit“ auf der Einstellungsseite (Clay).
-const KNAPP_AB_MINUTEN = 3;
+// Einstellungen von der Einstellungsseite (Clay), vom Handy geschickt und im
+// localStorage der Uhr gespeichert. Standardwerte gelten bis zum ersten Empfang.
+//   ansicht  "A" | "B" | "C"
+//   knapp    Mindest-Umstiegszeit in Minuten:
+//              Umstiegszeit ≤ knapp → „knapp“ (gelb), negativ → „verpasst“ (rot)
+//   hin, rueck  Automatik-Fenster { an, tage[Mo..So], von, bis } (für Schritt 5)
+const STANDARD_EINSTELLUNGEN = {
+	ansicht: "A",
+	knapp: 3,
+	hin: { an: true, tage: [true, true, true, true, true, false, false], von: "07:00", bis: "09:00" },
+	rueck: { an: false, tage: [true, true, true, true, true, false, false], von: "16:00", bis: "18:00" },
+};
+
+function ladeEinstellungen() {
+	try {
+		const text = localStorage.getItem("einstellungen");
+		if (text) return { ...STANDARD_EINSTELLUNGEN, ...JSON.parse(text) };
+	} catch {
+		console.log("Gespeicherte Einstellungen nicht lesbar");
+	}
+	return { ...STANDARD_EINSTELLUNGEN };
+}
+
+let einstellungen = ladeEinstellungen();
+let KNAPP_AB_MINUTEN = einstellungen.knapp;
 
 // Maße in Pixeln. Ganz unten steht in jeder Ansicht eine eigene 14-px-Zeile
 // mit dem Quellenhinweis „Daten: … · ohne Gewähr“ (freigegeben), darüber die
@@ -609,7 +629,7 @@ class PendelzugBehavior {
 		this.starte();
 	}
 	starte() {
-		this.ansicht = "A";        // Standard-Ansicht laut CLAUDE.md (wählbar ab Schritt 4)
+		this.ansicht = einstellungen.ansicht;   // Standard A, wählbar auf der Einstellungsseite
 		this.daten = null;         // angezeigte Verbindung (Format wie testdaten.js)
 		this.fehlerText = null;    // letzter Fehler (für den Meldungs-Bildschirm)
 
@@ -630,7 +650,7 @@ class PendelzugBehavior {
 		this.bereit = false;
 		this.wartend = null;
 		this.message = new Message({
-			keys: ["ANFRAGE", "VERBINDUNG", "FEHLER"],
+			keys: ["ANFRAGE", "VERBINDUNG", "FEHLER", "EINSTELLUNGEN"],
 			onReadable: () => this.empfange(),
 			onWritable: () => { this.bereit = true; this.sendeWartende(); },
 			onSuspend: () => { this.bereit = false; },
@@ -684,6 +704,21 @@ class PendelzugBehavior {
 			localStorage.setItem("letzte_" + this.richtung, text);
 			console.log("Verbindung erhalten: " + this.daten.status);
 		}
+		if (antwort.has("EINSTELLUNGEN")) {
+			try {
+				const neu = JSON.parse(antwort.get("EINSTELLUNGEN"));
+				const knappGeaendert = neu.knapp !== einstellungen.knapp;
+				einstellungen = { ...STANDARD_EINSTELLUNGEN, ...neu };
+				localStorage.setItem("einstellungen", JSON.stringify(einstellungen));
+				KNAPP_AB_MINUTEN = einstellungen.knapp;
+				if (!TESTBETRIEB) this.ansicht = einstellungen.ansicht;
+				console.log("Einstellungen erhalten: Ansicht " + einstellungen.ansicht + ", knapp " + einstellungen.knapp);
+				// Neue Mindest-Umstiegszeit ändert auch die Ampel → Verbindung neu aufbereiten lassen
+				if (knappGeaendert && !TESTBETRIEB) this.frage(0, false);
+			} catch {
+				console.log("Einstellungen nicht lesbar");
+			}
+		}
 		if (antwort.has("FEHLER")) {
 			this.fehlerText = antwort.get("FEHLER");
 			abfrageStatus = this.fehlerText;
@@ -735,7 +770,14 @@ class PendelzugBehavior {
 		return true;
 	}
 	onReleaseSelect(application) {
-		const lang = Date.now() - (this.selectSeit ?? Date.now()) >= LANG_MS;
+		// Loslassen ohne vorheriges Drücken in dieser App ignorieren: Das passiert,
+		// wenn die App mit Select aus dem Menü geöffnet wird (Drücken landet im
+		// Menü, Loslassen schon bei uns). Ebenso ignorieren: „Drücke“ über 5 s.
+		if (this.selectSeit === undefined) return true;
+		const dauer = Date.now() - this.selectSeit;
+		this.selectSeit = undefined;
+		if (dauer > 5000) return true;
+		const lang = dauer >= LANG_MS;
 		if (TESTBETRIEB) {
 			const i = ANSICHT_REIHENFOLGE.indexOf(this.ansicht);
 			this.ansicht = ANSICHT_REIHENFOLGE[(i + 1) % ANSICHT_REIHENFOLGE.length];

@@ -16,11 +16,6 @@ module.exports = {
 	HALTESTELLE_A: "Halstenbek",
 	HALTESTELLE_B: "Itzehoe",
 
-	// Mindest-Umstiegszeit in Minuten: ≤ dieser Wert = „knapp“.
-	// Gleicher Wert wie KNAPP_AB_MINUTEN auf der Uhr (main.js).
-	// Wird in Schritt 4 eine gemeinsame Einstellung (Clay).
-	KNAPP_AB_MINUTEN: 3,
-
 	// Wie lange (Sekunden) ein Suchergebnis wiederverwendet wird, z. B. beim
 	// Blättern mit Auf/Ab. Hält die Last für Transitous gering.
 	CACHE_SEKUNDEN: 90,

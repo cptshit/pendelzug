@@ -9,20 +9,42 @@
 //   3. Wir schicken der Uhr VERBINDUNG (JSON, Format wie testdaten.js)
 //      oder FEHLER (Text).
 //
+// Einstellungen (Clay): Nach dem Speichern und bei jedem Start der Uhr-App
+// schicken wir EINSTELLUNGEN (JSON) – nur Ansicht, Mindest-Umstiegszeit und
+// Automatik-Fenster, nie die Zugangsdaten.
+//
 // Netzwerk gibt es nur hier auf dem Handy, nie auf der Uhr.
 
 var konfig = require("./konfig");
 var aufbereitung = require("./aufbereitung");
+var einstellungen = require("./einstellungen");
+var Clay = require("@rebble/clay");
+var clayConfig = require("./config");
+
+// autoHandleEvents: false = Clay schickt NICHT selbst alle Werte an die Uhr.
+// Das machen wir unten, damit die Zugangsdaten auf dem Handy bleiben.
+var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
 // Aktuelle Datenquelle. Für Geofox (Schritt 6) wird nur diese Zeile geändert.
 var quelle = require("./transitous");
 
 // Zwischenspeicher der letzten Suche
 var cache = { richtung: null, zeit: 0, verbindungen: [] };
 
-function sende(daten) {
+// An die Uhr senden. „danach“ (optional) läuft erst, wenn die Uhr den Empfang
+// bestätigt hat – so überholen sich zwei Nachrichten nicht.
+function sende(daten, danach) {
 	Pebble.sendAppMessage(daten,
-		function () { console.log("an Uhr gesendet: " + Object.keys(daten).join(", ")); },
+		function () {
+			console.log("an Uhr gesendet: " + Object.keys(daten).join(", "));
+			if (danach) danach();
+		},
 		function (e) { console.log("Senden an Uhr fehlgeschlagen: " + JSON.stringify(e)); });
+}
+
+function sendeEinstellungen() {
+	var text = JSON.stringify(einstellungen.fuerUhr());
+	console.log("Einstellungen für die Uhr: " + text);
+	sende({ EINSTELLUNGEN: text });
 }
 
 function sendeFehler(text) {
@@ -117,10 +139,10 @@ function bearbeite(anfrage) {
 // weil das Netzwerk nur hier auf dem Handy genutzt wird.)
 var BEREIT_SCHLUESSEL = 15025;
 
-function meldeBereit() {
+function meldeBereit(danach) {
 	var daten = {};
 	daten[BEREIT_SCHLUESSEL] = 1;
-	sende(daten);
+	sende(daten, danach);
 }
 
 Pebble.addEventListener("ready", function () {
@@ -130,7 +152,8 @@ Pebble.addEventListener("ready", function () {
 
 Pebble.addEventListener("appmessage", function (e) {
 	if (e.payload[BEREIT_SCHLUESSEL] !== undefined) {
-		meldeBereit();
+		// Uhr-App ist gestartet: bereit melden, danach die Einstellungen schicken
+		meldeBereit(sendeEinstellungen);
 		return;
 	}
 	if (!e.payload.ANFRAGE) return;
@@ -143,4 +166,20 @@ Pebble.addEventListener("appmessage", function (e) {
 	}
 	console.log("Anfrage von der Uhr: " + e.payload.ANFRAGE);
 	bearbeite(anfrage);
+});
+
+// Einstellungsseite öffnen (Zahnrad in der Pebble-App auf dem Handy)
+Pebble.addEventListener("showConfiguration", function () {
+	Pebble.openURL(clay.generateUrl());
+});
+
+// Einstellungsseite geschlossen: Werte speichern (macht Clay im localStorage
+// des Handys) und den für die Uhr bestimmten Teil senden.
+Pebble.addEventListener("webviewclosed", function (e) {
+	if (!e || !e.response) return;   // ohne Speichern geschlossen
+	clay.getSettings(e.response, false);
+	// Die Uhr fragt danach die angezeigte Verbindung neu an. Das Handy bereitet
+	// sie aus dem Zwischenspeicher mit der neuen Mindest-Umstiegszeit auf –
+	// ohne neue Anfrage an Transitous.
+	sendeEinstellungen();
 });

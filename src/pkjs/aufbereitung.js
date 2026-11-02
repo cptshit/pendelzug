@@ -3,7 +3,7 @@
 //
 // Format des Pakets: siehe src/embeddedjs/testdaten.js (gleiches Format).
 
-var konfig = require("./konfig");
+var einstellungen = require("./einstellungen");
 
 // Platzhalter-Linienfarben (später nach hvv-Vorgaben)
 var FARBE_S = "#AA00AA";
@@ -77,7 +77,9 @@ function paket(verbindungen, index, info) {
 	// Ampel und Statustext
 	var ausfall = zuege.some(function (t) { return t.ausfall; });
 	var verpasst = umst.some(function (u) { return u !== null && u < 0; });
-	var knapp = umst.some(function (u) { return u !== null && u >= 0 && u <= konfig.KNAPP_AB_MINUTEN; });
+	// Mindest-Umstiegszeit aus den Einstellungen (Clay), Standard 3 Minuten
+	var grenze = einstellungen.lesen().knapp;
+	var knapp = umst.some(function (u) { return u !== null && u >= 0 && u <= grenze; });
 	var anVersp = Math.max(0, minuten(letzter.istAn - letzter.planAn));
 	var ampel, status;
 	if (ausfall)          { ampel = "rot";  status = "AUSFALL"; }

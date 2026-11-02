@@ -3,8 +3,8 @@
 Watchapp für die **Pebble Time 2**. Sie zeigt auf einen Blick, ob die
 Bahnverbindung Halstenbek ⇄ Itzehoe pünktlich ist und ob die Umstiege klappen.
 
-> **Stand:** Schritt 3 – echte Verbindungen vom Handy (Transitous).
-> Bis zur Einstellungsseite (Schritt 4) zeigt die Uhr immer Ansicht A.
+> **Stand:** Schritt 4 – echte Verbindungen (Transitous) und Einstellungsseite.
+> Automatischer Start, Aktualisierung und Vibration folgen in Schritt 5.
 
 Echte Verbindung im Emulator (Transitous, 02.11.2026):
 
@@ -43,6 +43,29 @@ negativ als „verpasst“.
 die App feste Testdaten. Dann blättern Auf/Ab durch vier Test-Zustände
 (pünktlich, Umstieg knapp, Anschluss weg, Warten am Umstieg) und Select wechselt
 die Ansicht (A → B → C).
+
+## Einstellungen
+
+In der Pebble-App auf dem Handy über das Zahnrad bei Pendelzug:
+
+- **Ansicht:** A – Liste (Standard), B – Ankunft groß, C – Nächster Schritt
+- **Mindest-Umstiegszeit:** 1–10 Minuten (Standard 3)
+- **Automatik Hinweg / Rückweg:** an/aus, Wochentage, Zeitfenster
+  (Standard: Hinweg Mo–Fr 07:00–09:00, Rückweg aus). Wirkt ab Schritt 5.
+- **Geofox-Benutzer und -Passwort:** bleiben auf dem Handy, werden nie an die
+  Uhr geschickt; werden erst mit der Umstellung auf Geofox benutzt.
+
+<img src="screenshots/einstellungen.png" alt="Einstellungsseite" width="250">
+
+**Im Emulator:** App starten, dann
+
+```sh
+./pebble.sh einstellungen
+```
+
+Die Seite öffnet sich in deinem Browser. Nach „Speichern“ gehen die Werte an
+die App im Emulator. (Dafür nutzt der Container das Netz deines Rechners,
+siehe `pebble.sh`.)
 
 ## Datenquelle
 
@@ -101,6 +124,7 @@ normale `pebble`-Befehl, nur läuft er im Container:
 ./pebble.sh install --emulator emery   # im Emulator installieren und starten
 ./pebble.sh logs --emulator emery      # Log-Ausgaben ansehen (Strg+C beendet)
 ./pebble.sh screenshot --no-open --emulator emery screenshots/bild.png
+./pebble.sh einstellungen              # Einstellungsseite im Browser öffnen
 ./pebble.sh stop                       # Container und Emulator beenden
 ```
 
@@ -116,12 +140,15 @@ src/embeddedjs/main.js        Uhr-Code: Ansichten A, B, C (Piu)
 src/embeddedjs/testdaten.js   vier Beispiel-Verbindungen für den Testbetrieb
 src/embeddedjs/manifest.json  Liste der JavaScript-Module der Uhr
 src/pkjs/index.js             Handy-Code (PKJS): Anfragen der Uhr beantworten
-src/pkjs/konfig.js            Haltestellen, Kontakt für Transitous, Grenzwerte
+src/pkjs/konfig.js            Haltestellen, Kontakt für Transitous
+src/pkjs/config.js            Aufbau der Einstellungsseite (Clay)
+src/pkjs/einstellungen.js     Einstellungen lesen, Teil für die Uhr (ohne Zugangsdaten)
 src/pkjs/transitous.js        Adapter für die Verbindungssuche bei Transitous
 src/pkjs/aufbereitung.js      Umstiege, Ampel, Paket für die Uhr (quellenunabhängig)
 src/c/mdbl.c                  startet JavaScript auf der Uhr (Speichergrößen)
 package.json                  App-Daten: Name, UUID, Plattformen
 docker/Dockerfile             Entwicklungsumgebung (Ubuntu 24.04 + Pebble-SDK)
+docker/browser.sh             Browser-Ersatz im Container (für die Einstellungsseite)
 pebble.sh                     Startskript für die Docker-Umgebung
 ```
 

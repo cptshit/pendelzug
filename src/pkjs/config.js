@@ -1,0 +1,100 @@
+// config.js – Aufbau der Einstellungsseite (Clay).
+//
+// Clay baut daraus auf dem Handy eine Webseite. Die gewählten Werte speichert
+// Clay im localStorage des Handys („clay-settings“). Was davon an die Uhr geht,
+// entscheidet einstellungen.js – die Zugangsdaten bleiben auf dem Handy.
+//
+// Jedes Feld mit „messageKey“ wird gespeichert. Die Namen müssen hier NICHT in
+// package.json stehen, weil wir die Werte selbst weiterverarbeiten
+// (autoHandleEvents: false, siehe index.js).
+
+var TAGE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+
+module.exports = [
+	{ type: "heading", defaultValue: "Pendelzug" },
+	{ type: "text", defaultValue: "Halstenbek ⇄ Itzehoe" },
+
+	{
+		type: "section",
+		items: [
+			{ type: "heading", defaultValue: "Anzeige" },
+			{
+				type: "select",
+				messageKey: "ansicht",
+				label: "Ansicht",
+				defaultValue: "A",
+				options: [
+					{ label: "A – Liste", value: "A" },
+					{ label: "B – Ankunft groß", value: "B" },
+					{ label: "C – Nächster Schritt", value: "C" },
+				],
+			},
+			{
+				type: "slider",
+				messageKey: "knapp",
+				label: "Mindest-Umstiegszeit (Minuten)",
+				description: "Bis zu dieser Umstiegszeit gilt ein Umstieg als „knapp“ (gelb).",
+				defaultValue: 3,
+				min: 1,
+				max: 10,
+				step: 1,
+			},
+		],
+	},
+
+	{
+		type: "section",
+		items: [
+			{ type: "heading", defaultValue: "Automatik Hinweg" },
+			{
+				type: "text",
+				defaultValue: "In diesem Zeitfenster startet die App von selbst, aktualisiert alle 2 Minuten und vibriert nur bei Verspätung, Ausfall oder verpasstem Umstieg.",
+			},
+			{ type: "toggle", messageKey: "hinAn", label: "Automatik Hinweg", defaultValue: true },
+			{ type: "checkboxgroup", messageKey: "hinTage", label: "Tage", defaultValue: [true, true, true, true, true, false, false], options: TAGE },
+			{ type: "input", messageKey: "hinVon", label: "von", defaultValue: "07:00", attributes: { type: "time" } },
+			{ type: "input", messageKey: "hinBis", label: "bis", defaultValue: "09:00", attributes: { type: "time" } },
+		],
+	},
+
+	{
+		type: "section",
+		items: [
+			{ type: "heading", defaultValue: "Automatik Rückweg" },
+			{ type: "toggle", messageKey: "rueckAn", label: "Automatik Rückweg", defaultValue: false },
+			{ type: "checkboxgroup", messageKey: "rueckTage", label: "Tage", defaultValue: [true, true, true, true, true, false, false], options: TAGE },
+			{ type: "input", messageKey: "rueckVon", label: "von", defaultValue: "16:00", attributes: { type: "time" } },
+			{ type: "input", messageKey: "rueckBis", label: "bis", defaultValue: "18:00", attributes: { type: "time" } },
+		],
+	},
+
+	{
+		type: "section",
+		items: [
+			{ type: "heading", defaultValue: "Datenquelle" },
+			{
+				type: "text",
+				defaultValue: "Derzeit: <a href=\"https://transitous.org\">Transitous</a> " +
+					"(<a href=\"https://transitous.org/sources/\">Datenquellen und Lizenzen</a>, " +
+					"Kartendaten © OpenStreetMap-Mitwirkende). Später: hvv Geofox.",
+			},
+			{
+				type: "input",
+				messageKey: "geofoxBenutzer",
+				label: "Geofox-Benutzer",
+				defaultValue: "",
+				attributes: { autocomplete: "off", autocapitalize: "off" },
+			},
+			{
+				type: "input",
+				messageKey: "geofoxPasswort",
+				label: "Geofox-Passwort",
+				description: "Benutzer und Passwort bleiben auf dem Handy und werden nie an die Uhr geschickt. Sie werden erst mit der Umstellung auf Geofox benutzt.",
+				defaultValue: "",
+				attributes: { type: "password", autocomplete: "off" },
+			},
+		],
+	},
+
+	{ type: "submit", defaultValue: "Speichern" },
+];

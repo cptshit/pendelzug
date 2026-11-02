@@ -25,6 +25,8 @@
 //     dauer    nur bei Fußweg: Gehzeit in Minuten
 //   ankunft    { plan: "HH:MM", versp: Minuten }
 //   stand      Uhrzeit der letzten Aktualisierung "HH:MM"
+//   quelle     Name der Datenquelle für den Hinweis „Daten: … · ohne Gewähr“
+//              (setzt später der Adapter in PKJS: „Transitous“, ab Geofox „hvv“)
 //
 // Die Fahrzeiten sind ausgedacht und stimmen nicht mit dem echten Fahrplan überein.
 
@@ -42,6 +44,7 @@ export default [
 			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", umstieg: 9 },
 		],
 		ankunft: { plan: "07:58", versp: 0 },
+		quelle: "Transitous",
 		stand: "07:05",
 	},
 	// 2) S3 verspätet, dadurch wird der erste Umstieg knapp
@@ -55,6 +58,7 @@ export default [
 			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 1, ab: "Elmshorn", gleis: "3", umstieg: 6 },
 		],
 		ankunft: { plan: "07:58", versp: 1 },
+		quelle: "Transitous",
 		stand: "07:08",
 	},
 	// 3) S3 stark verspätet, der Anschluss nach dem Fußweg ist weg
@@ -68,6 +72,7 @@ export default [
 			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", umstieg: -3 },
 		],
 		ankunft: { plan: "07:58", versp: 0 },
+		quelle: "Transitous",
 		stand: "07:21",
 	},
 ];

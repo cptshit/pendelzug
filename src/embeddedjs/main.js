@@ -39,6 +39,11 @@ const AMPEL = {
 // Wird später zur Einstellung „Mindest-Umstiegszeit“ auf der Einstellungsseite (Clay).
 const KNAPP_AB_MINUTEN = 3;
 
+// Maße in Pixeln. Ganz unten steht in jeder Ansicht eine eigene 14-px-Zeile
+// mit dem Quellenhinweis „Daten: … · ohne Gewähr“ (freigegeben), darüber die
+// Fußzeile. Deshalb sind Kopfzeile, Band und Teilstücke etwas kompakter.
+const MASS = { kopf: 24, band: 26, zug: 42, zeile2: 24, fussLinie: 46, fussUnten: 18 };
+
 // Textfarbe der Fußzeile je Gesamtstatus (Ampel). Die Fußzeile richtet sich
 // immer nach dem Gesamtstatus, nicht nach der Verspätung des letzten Teilstücks.
 const AMPEL_TEXT = {
@@ -51,7 +56,7 @@ const AMPEL_TEXT = {
 // Skins und Styles
 // ---------------------------------------------------------------------------
 // Skins und Styles einmal anlegen und wiederverwenden. Das spart Speicher,
-// denn die Uhr hat für JavaScript nur rund 32 kB.
+// denn JavaScript hat auf der Uhr nur 56 kB (siehe src/c/mdbl.c).
 //
 // Schriften: Pebble-Systemschriften, Schreibweise „[Gewicht] [Größe]px Familie“.
 // Die Größe muss exakt in der Schrifttabelle der Firmware stehen,
@@ -74,6 +79,7 @@ const gleisStyle   = new Style({ font: "18px Gothic", color: FARBE.grau, horizon
 const badgeStyle   = new Style({ font: "bold 18px Gothic", color: "white", horizontal: "center" });
 const fussStyle    = new Style({ font: "18px Gothic", color: FARBE.grau, horizontal: "left" });
 const standStyle   = new Style({ font: "14px Gothic", color: FARBE.grau, horizontal: "right" });
+const hinweisStyle = new Style({ font: "14px Gothic", color: FARBE.grau, horizontal: "center" });
 
 // Styles, deren Farbe sich nach dem Zustand richtet: bei Bedarf einmal
 // anlegen und im Zwischenspeicher (Cache) ablegen, statt bei jedem Neuzeichnen
@@ -141,13 +147,13 @@ function ZugZeile(teil) {
 	const v = verspaetung(teil);
 	const z = zweiteZeile(teil);
 	return new Container(null, {
-		left: 0, right: 0, height: 44,
+		left: 0, right: 0, height: MASS.zug,
 		contents: [
 			Badge(teil),
 			new Label(null, { left: 50, top: 0, height: 28, style: zeitStyle, string: teil.plan }),
 			new Label(null, { left: 104, top: 0, height: 28, style: farbStyle("bold 24px Gothic", v.farbe), string: v.text }),
 			new Label(null, { right: 4, top: 4, height: 22, style: gleisStyle, string: teil.gleis ? "Gl. " + teil.gleis : "" }),
-			new Label(null, { left: 50, right: 2, top: 26, height: 16, style: farbStyle("14px Gothic", z.farbe), string: z.text }),
+			new Label(null, { left: 50, right: 2, top: MASS.zeile2, height: 16, style: farbStyle("14px Gothic", z.farbe), string: z.text }),
 		],
 	});
 }
@@ -164,11 +170,12 @@ function FussZeile(teil) {
 
 // Der ganze Bildschirm für eine Verbindung.
 //
-// Aufteilung von oben nach unten (Pixel):
-//     0– 25  Kopfzeile: Richtung
-//    26– 55  Statusband (Ampelfarbe + Text)
-//    56–…    Teilstücke, untereinander (Column stapelt automatisch)
-//   …–227    Fußzeile: Ankunft links, „Stand“ rechts (am unteren Rand verankert)
+// Aufteilung von oben nach unten (Höhen siehe MASS):
+//   Kopfzeile: Richtung
+//   Statusband (Ampelfarbe + Text)
+//   Teilstücke, untereinander (Column stapelt automatisch)
+//   Fußzeile: Ankunft links, „Stand“ rechts (am unteren Rand verankert)
+//   ganz unten: Quellenhinweis
 function AnsichtA(verbindung) {
 	// Teilstücke mit Trennlinien dazwischen
 	const zeilen = [];
@@ -184,30 +191,36 @@ function AnsichtA(verbindung) {
 	const anText = "an " + an.plan + " " +
 		(verbindung.ampel === "rot" ? "verpasst" : "+" + (an.versp || 0));
 
+	const hinweis = "Daten: " + verbindung.quelle + " · ohne Gewähr";
+	const stand = "Stand " + verbindung.stand;
+	const u = MASS.fussUnten;
+
 	return new Container(null, {
 		left: 0, right: 0, top: 0, bottom: 0, skin: weissSkin,
 		contents: [
 			// Kopfzeile
-			new Label(null, { left: 0, right: 0, top: 0, height: 26, style: kopfStyle, string: verbindung.richtung }),
+			new Label(null, { left: 0, right: 0, top: 0, height: MASS.kopf, style: kopfStyle, string: verbindung.richtung }),
 
 			// Statusband: Farbe UND Text, damit man es auch ohne Farbsehen versteht
 			new Label(null, {
-				left: 0, right: 0, top: 26, height: 30,
+				left: 0, right: 0, top: MASS.kopf, height: MASS.band,
 				skin: bandSkin[verbindung.ampel], style: bandStyle[verbindung.ampel],
 				string: verbindung.status,
 			}),
 
 			// Teilstücke
-			new Column(null, { left: 0, right: 0, top: 58, contents: zeilen }),
+			new Column(null, { left: 0, right: 0, top: MASS.kopf + MASS.band + 2, contents: zeilen }),
 
 			// Fußzeile mit Trennlinie darüber
-			new Content(null, { left: 0, right: 0, bottom: 30, height: 1, skin: linieSkin }),
+			new Content(null, { left: 0, right: 0, bottom: MASS.fussLinie, height: 1, skin: linieSkin }),
 			// Ganze Zeile in der Farbe des Gesamtstatus
 			new Label(null, {
-				left: 4, right: 70, bottom: 4, height: 24,
+				left: 4, right: 70, bottom: u + 2, height: 24,
 				style: farbStyle("bold 18px Gothic", AMPEL_TEXT[verbindung.ampel]), string: anText,
 			}),
-			new Label(null, { right: 4, bottom: 6, height: 20, style: standStyle, string: "Stand " + verbindung.stand }),
+			new Label(null, { right: 4, bottom: u + 4, height: 20, style: standStyle, string: stand }),
+			// Quellenhinweis als eigene Zeile ganz unten
+			new Label(null, { left: 0, right: 0, bottom: 1, height: 17, style: hinweisStyle, string: hinweis }),
 		],
 	});
 }

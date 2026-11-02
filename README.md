@@ -6,7 +6,7 @@ Bahnverbindung Halstenbek ⇄ Itzehoe pünktlich ist und ob die Umstiege klappen
 > **Stand:** Schritt 2 – Ansichten A, B und C mit fest eingebauten Testdaten.
 > Echte Verbindungsdaten folgen in Schritt 3.
 
-**Ansicht A – Liste** (Standard), in den drei Test-Zuständen:
+**Ansicht A – Liste** (Standard), in drei der vier Test-Zustände:
 
 ![Ansicht A, Zustand „pünktlich“](screenshots/zustand1.png)
 ![Ansicht A, Zustand „Umstieg knapp“](screenshots/zustand2.png)
@@ -21,7 +21,7 @@ Bahnverbindung Halstenbek ⇄ Itzehoe pünktlich ist und ob die Umstiege klappen
 
 | Taste | Funktion (Testbetrieb, Schritt 2) |
 |---|---|
-| Auf / Ab | zwischen den drei Test-Zuständen blättern |
+| Auf / Ab | zwischen den vier Test-Zuständen blättern (pünktlich, knapp, Anschluss weg, Warten am Umstieg) |
 | Select | nächste Ansicht (A → B → C); ab Schritt 4 wird die Ansicht in den Einstellungen gewählt |
 | Zurück | App schließen |
 

@@ -6,7 +6,8 @@
 //   C – Nächster Schritt: „JETZT“ und „DANN“
 //
 // Tasten im Testbetrieb:
-//   Auf / Ab   vorheriger / nächster Test-Zustand (pünktlich, knapp, Anschluss weg)
+//   Auf / Ab   vorheriger / nächster Test-Zustand
+//              (pünktlich, knapp, Anschluss weg, Warten am Umstieg)
 //   Select     nächste Ansicht (A → B → C → A). NUR VORÜBERGEHEND: Ab Schritt 4
 //              wird die Ansicht in den Einstellungen gewählt, und Select lädt neu.
 //   Zurück     App schließen
@@ -139,6 +140,11 @@ function minutenBis(ziel, jetzt) {
 	if (d < -720) d += 1440;
 	if (d > 720) d -= 1440;
 	return d;
+}
+
+// Ist-Ankunft eines Teilstücks = Plan-Ankunft + Ankunftsverspätung
+function istAn(teil) {
+	return minuten(teil.an) + (teil.anVersp || 0);
 }
 
 // Ist dieses Teilstück schon abgefahren? (gerechnet mit der Ist-Zeit)
@@ -429,14 +435,13 @@ function AnsichtB(verbindung) {
 // Ansicht C – Nächster Schritt
 // ---------------------------------------------------------------------------
 
-// Welcher Zug ist „JETZT“? Der zuletzt abgefahrene (man sitzt drin),
-// oder – wenn noch keiner abgefahren ist – der erste (man wartet auf ihn).
+// Welcher Zug ist „JETZT“? Der erste Zug, dessen Ist-Ankunft noch nicht
+// vorbei ist: Entweder sitzt man drin, oder man wartet auf ihn (auch am
+// Umstieg). Ist die Ankunft eines Zugs vorbei, springt „JETZT“ weiter.
+// Sind alle Züge angekommen, bleibt der letzte stehen.
 function aktuellerZug(verbindung, jetzt) {
 	const liste = zuege(verbindung);
-	let aktuell = liste[0];
-	for (const t of liste)
-		if (abgefahren(t, jetzt)) aktuell = t;
-	return aktuell;
+	return liste.find(t => minutenBis(istAn(t), jetzt) > 0) ?? liste[liste.length - 1];
 }
 
 // Aufteilung von oben nach unten:
@@ -463,9 +468,13 @@ function AnsichtC(verbindung) {
 	}
 
 	const v = verspaetung(aktuell);
-	const zeile2 = abgefahren(aktuell, jetzt)
-		? "unterwegs bis " + (dann ? dann.ab : verbindung.ziel)
-		: "ab " + aktuell.ab + " · " + countdown(aktuell, jetzt);
+	let zeile2;
+	if (minutenBis(istAn(aktuell), jetzt) <= 0)
+		zeile2 = "angekommen in " + verbindung.ziel;      // nur nach dem letzten Zug möglich
+	else if (abgefahren(aktuell, jetzt))
+		zeile2 = "unterwegs bis " + (dann ? dann.ab : verbindung.ziel);
+	else
+		zeile2 = "ab " + aktuell.ab + " · " + countdown(aktuell, jetzt);
 
 	const inhalt = [
 		Statusband(verbindung, 0, MASS.band),

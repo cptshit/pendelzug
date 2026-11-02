@@ -20,6 +20,8 @@
 //     versp    Verspätung in Minuten (0 = pünktlich)
 //     ausfall  true, wenn der Zug ausfällt
 //     ab       Abfahrtsort dieses Teilstücks
+//     an       Plan-Ankunft am Ende dieses Teilstücks "HH:MM"
+//     anVersp  Verspätung bei der Ankunft in Minuten
 //     gleis    Abfahrtsgleis (oder "" wenn unbekannt)
 //     umstieg  Minuten, die zum Umsteigen bleiben (null beim ersten Teilstück);
 //              negativ = Anschluss nicht mehr erreichbar
@@ -33,6 +35,8 @@
 //              Ohne dieses Feld (ab Schritt 3) nimmt die App die echte Uhrzeit.
 //
 // Die Fahrzeiten sind ausgedacht und stimmen nicht mit dem echten Fahrplan überein.
+// Die Umstiegszeiten passen aber rechnerisch zu den Ankunfts- und Abfahrtszeiten:
+// Umstieg = Ist-Abfahrt des nächsten Zugs − Ist-Ankunft des vorigen − Fußweg.
 
 const S3 = "#AA00AA";     // Platzhalter-Farbe S-Bahn
 const REGIO = "#555555";  // Platzhalter-Farbe Regionalzüge
@@ -45,8 +49,8 @@ export default [
 		ampel: "gruen",
 		status: "PÜNKTLICH",
 		teile: [
-			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 0, ab: "Halstenbek", gleis: "1", umstieg: null },
-			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", umstieg: 9 },
+			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 0, ab: "Halstenbek", gleis: "1", an: "07:32", anVersp: 0, umstieg: null },
+			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: 9 },
 		],
 		ankunft: { plan: "07:58", versp: 0 },
 		quelle: "Transitous",
@@ -60,9 +64,9 @@ export default [
 		ampel: "gelb",
 		status: "UMSTIEG KNAPP",
 		teile: [
-			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 3, ab: "Halstenbek", gleis: "1", umstieg: null },
-			{ art: "zug", linie: "RB71", farbe: REGIO, plan: "07:24", versp: 0, ab: "Pinneberg", gleis: "2", umstieg: 2 },
-			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 1, ab: "Elmshorn", gleis: "3", umstieg: 6 },
+			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 3, ab: "Halstenbek", gleis: "1", an: "07:19", anVersp: 3, umstieg: null },
+			{ art: "zug", linie: "RB71", farbe: REGIO, plan: "07:24", versp: 0, ab: "Pinneberg", gleis: "2", an: "07:35", anVersp: 1, umstieg: 2 },
+			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 1, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 1, umstieg: 6 },
 		],
 		ankunft: { plan: "07:58", versp: 1 },
 		quelle: "Transitous",
@@ -76,13 +80,29 @@ export default [
 		ampel: "rot",
 		status: "ANSCHLUSS WEG",
 		teile: [
-			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 12, ab: "Halstenbek", gleis: "1", umstieg: null },
+			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 12, ab: "Halstenbek", gleis: "1", an: "07:28", anVersp: 12, umstieg: null },
 			{ art: "fuss", dauer: 4 },
-			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", umstieg: -3 },
+			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: -3 },
 		],
 		ankunft: { plan: "07:58", versp: 0 },
 		quelle: "Transitous",
 		stand: "07:21",
 		jetzt: "07:22",   // S3 fährt wegen Verspätung erst 07:24
+	},
+	// 4) Warten am Umstieg: S3 ist schon in Pinneberg angekommen, die RB71 kommt gleich
+	{
+		richtung: "Halstenbek → Itzehoe",
+		ziel: "Itzehoe",
+		ampel: "gruen",
+		status: "PÜNKTLICH",
+		teile: [
+			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 0, ab: "Halstenbek", gleis: "1", an: "07:18", anVersp: 0, umstieg: null },
+			{ art: "zug", linie: "RB71", farbe: REGIO, plan: "07:24", versp: 0, ab: "Pinneberg", gleis: "2", an: "07:34", anVersp: 0, umstieg: 6 },
+			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: 7 },
+		],
+		ankunft: { plan: "07:58", versp: 0 },
+		quelle: "Transitous",
+		stand: "07:21",
+		jetzt: "07:22",   // S3 seit 07:18 angekommen, RB71 fährt 07:24
 	},
 ];

@@ -26,7 +26,8 @@
 //     umstieg  Minuten, die zum Umsteigen bleiben (null beim ersten Teilstück);
 //              negativ = Anschluss nicht mehr erreichbar
 //     dauer    nur bei Fußweg: Gehzeit in Minuten
-//   ankunft    { plan: "HH:MM", versp: Minuten }
+//   ankunft    { plan: "HH:MM", versp: Minuten, ersatz: "HH:MM" }
+//              ersatz nur bei Rot: Ankunft der nächsten Verbindung ohne Problem
 //   stand      Uhrzeit der letzten Aktualisierung "HH:MM"
 //   quelle     Name der Datenquelle für den Hinweis „Daten: … · ohne Gewähr“
 //              (setzt später der Adapter in PKJS: „Transitous“, ab Geofox „hvv“)
@@ -84,7 +85,7 @@ export default [
 			{ art: "fuss", dauer: 4 },
 			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: -3 },
 		],
-		ankunft: { plan: "07:58", versp: 0 },
+		ankunft: { plan: "07:58", versp: 0, ersatz: "08:21" },
 		quelle: "Transitous",
 		stand: "07:21",
 		jetzt: "07:22",   // S3 fährt wegen Verspätung erst 07:24

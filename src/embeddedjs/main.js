@@ -1,16 +1,20 @@
 // main.js – Uhr-Code von Pendelzug (läuft auf der Pebble, nicht auf dem Handy).
 //
-// Stand Schritt 2: drei Ansichten mit fest eingebauten Testdaten.
+// Stand Schritt 3: echte Verbindungen vom Handy (PKJS), drei Ansichten:
 //   A – Liste:            alle Teilstücke untereinander
 //   B – Ankunft groß:     große Ankunftszeit, Strecke als Leiste, nächste Abfahrt
 //   C – Nächster Schritt: „JETZT“ und „DANN“
+// Bis zur Einstellungsseite (Schritt 4) wird immer Ansicht A gezeigt.
 //
-// Tasten im Testbetrieb:
-//   Auf / Ab   vorheriger / nächster Test-Zustand
-//              (pünktlich, knapp, Anschluss weg, Warten am Umstieg)
-//   Select     nächste Ansicht (A → B → C → A). NUR VORÜBERGEHEND: Ab Schritt 4
-//              wird die Ansicht in den Einstellungen gewählt, und Select lädt neu.
-//   Zurück     App schließen
+// Tasten:
+//   Auf / Ab     frühere / spätere Verbindung
+//   Select       neu laden
+//   Select lang  Richtung umschalten (Hinweg ⇄ Rückweg)
+//   Zurück       App schließen
+//
+// Testbetrieb (TESTBETRIEB = true weiter unten): feste Testdaten wie in
+// Schritt 2. Dann blättern Auf/Ab durch die Test-Zustände und Select
+// wechselt die Ansicht (A → B → C).
 //
 // Die Oberfläche ist mit Piu gebaut, dem Oberflächen-Framework von Alloy.
 // Piu arbeitet mit „Content“-Objekten (Rechtecke), die in „Containern“
@@ -20,7 +24,14 @@
 //
 // Bildschirm der Pebble Time 2 (emery): 200 × 228 Pixel, 64 Farben.
 
+import Message from "pebble/message";
 import testdaten from "testdaten";
+
+// true = feste Testdaten statt echter Verbindungen (zum Prüfen der Ansichten)
+const TESTBETRIEB = false;
+
+// Ab wie vielen Millisekunden gilt ein Druck auf Select als „lang“?
+const LANG_MS = 700;
 
 // ---------------------------------------------------------------------------
 // Farben (aus dem freigegebenen Design in CLAUDE.md)
@@ -197,8 +208,8 @@ function zweiteZeile(teil) {
 }
 
 // Zusatz zur Ankunftszeit: „+1“, bei Rot „verpasst“.
-// Ab Schritt 3 steht bei Rot die nächste erreichbare Verbindung da,
-// z. B. „an 08:21 statt 07:58“.
+// (In der Fußzeile steht bei Rot, wenn bekannt, die Ersatz-Ankunft, siehe
+// FussbereichAnkunft.)
 function ankunftZusatz(verbindung) {
 	return verbindung.ampel === "rot" ? "verpasst" : "+" + (verbindung.ankunft.versp || 0);
 }
@@ -257,26 +268,65 @@ function ZugKurz(teil, top, rechts) {
 	});
 }
 
+// Zustand der Datenabfrage, wird rechts in der Fußzeile angezeigt:
+//   null           normal: „Stand 07:05“
+//   "laedt"        „lädt …“ (Anfrage läuft)
+//   sonst (Text)   Fehler: „Fehler · 07:05“ in Rot (Text steht im Log)
+let abfrageStatus = null;
+
+function standText(verbindung) {
+	if (abfrageStatus === "laedt") return "lädt …";
+	if (abfrageStatus) return "Fehler · " + verbindung.stand;
+	return "Stand " + verbindung.stand;
+}
+
 // Fußbereich, gleich in allen Ansichten:
 //   ───────────────────────────────────────
 //   [links: Text in eigenem Style]   Stand 07:05
 //   Daten: Transitous · ohne Gewähr
 // „links“ ist in A und C die Ankunft, in B der Abfahrtsort.
-function Fussbereich(verbindung, linksText, linksStyle) {
+// Optional „klein“ = { text, farbe }: Zusatz in 14 px direkt dahinter (z. B. „statt 07:58“).
+function Fussbereich(verbindung, linksText, linksStyle, klein) {
 	const u = MASS.fussUnten;
+	const links = [new Label(null, { top: 0, height: 24, style: linksStyle, string: linksText })];
+	if (klein)
+		links.push(new Label(null, { top: 5, height: 18, style: farbStyle("14px Gothic", klein.farbe), string: " " + klein.text }));
 	return [
 		new Content(null, { left: 0, right: 0, bottom: MASS.fussLinie, height: 1, skin: linieSkin }),
-		new Label(null, { left: 4, right: 70, bottom: u + 2, height: 24, style: linksStyle, string: linksText }),
-		new Label(null, { right: 4, bottom: u + 4, height: 20, style: standStyle, string: "Stand " + verbindung.stand }),
+		// Row setzt die Teile nebeneinander, jedes so breit wie sein Text
+		new Row(null, { left: 4, bottom: u + 2, height: 24, contents: links }),
+		new Label(null, {
+			right: 4, bottom: u + 4, height: 20,
+			style: abfrageStatus && abfrageStatus !== "laedt" ? farbStyle("14px Gothic", FARBE.problem, "right") : standStyle,
+			string: standText(verbindung),
+		}),
 		new Label(null, { left: 0, right: 0, bottom: 1, height: 17, style: hinweisStyle, string: "Daten: " + verbindung.quelle + " · ohne Gewähr" }),
 	];
 }
 
-// Fußbereich mit der Ankunft links, ganze Zeile in der Farbe des Gesamtstatus
+// Fußbereich mit der Ankunft links, ganze Zeile in der Farbe des Gesamtstatus.
+// Bei Rot mit bekannter Ersatzverbindung: „an 08:21 statt 07:58“, dabei
+// „statt 07:58“ kleiner, damit die Zeile nicht in „Stand …“ hineinläuft.
 function FussbereichAnkunft(verbindung) {
-	return Fussbereich(verbindung,
-		"an " + verbindung.ankunft.plan + " " + ankunftZusatz(verbindung),
-		farbStyle("bold 18px Gothic", AMPEL_TEXT[verbindung.ampel]));
+	const an = verbindung.ankunft;
+	const farbe = AMPEL_TEXT[verbindung.ampel];
+	const style = farbStyle("bold 18px Gothic", farbe);
+	if (verbindung.ampel === "rot" && an.ersatz)
+		return Fussbereich(verbindung, "an " + an.ersatz, style, { text: "statt " + an.plan, farbe });
+	return Fussbereich(verbindung, "an " + an.plan + " " + ankunftZusatz(verbindung), style);
+}
+
+// Bildschirm ohne Verbindungsdaten: beim allerersten Start oder bei Fehlern
+// ohne gespeichertes Ergebnis.
+function Meldung(titel, text) {
+	return Bildschirm([
+		new Label(null, { left: 0, right: 0, top: 30, height: 30, style: farbStyle("bold 24px Gothic", FARBE.text, "center"), string: titel }),
+		new Text(null, {
+			left: 10, right: 10, top: 70,
+			style: farbStyle("18px Gothic", FARBE.grau, "center"),
+			string: text,
+		}),
+	]);
 }
 
 // Hintergrund-Container für eine ganze Ansicht
@@ -521,34 +571,149 @@ const ANSICHT_REIHENFOLGE = ["A", "B", "C"];
 
 class PendelzugBehavior {
 	onCreate(application) {
-		this.index = 0;        // welcher Test-Zustand
-		this.ansicht = "A";    // Standard-Ansicht laut CLAUDE.md
-		this.zeige(application);
+		this.application = application;
+		this.ansicht = "A";        // Standard-Ansicht laut CLAUDE.md (wählbar ab Schritt 4)
+		this.nr = 0;               // 0 = nächste erreichbare Verbindung, -1 früher, +1 später
+		this.daten = null;         // angezeigte Verbindung (Format wie testdaten.js)
+		this.fehlerText = null;    // letzter Fehler (für den Meldungs-Bildschirm)
+
+		if (TESTBETRIEB) {
+			this.testIndex = 0;
+			this.daten = testdaten[0];
+			this.zeige();
+			return;
+		}
+
+		// Richtung nach Tageszeit: vormittags Hinweg, ab 12 Uhr Rückweg
+		this.richtung = new Date().getHours() < 12 ? "hin" : "rueck";
+		this.ladeGespeichert();
+		this.zeige();
+
+		// Verbindung zum Handy. Die Schlüssel müssen zu package.json passen.
+		// onWritable: jetzt darf gesendet werden; onSuspend: gerade nicht.
+		this.bereit = false;
+		this.wartend = null;
+		this.message = new Message({
+			keys: ["ANFRAGE", "VERBINDUNG", "FEHLER"],
+			onReadable: () => this.empfange(),
+			onWritable: () => { this.bereit = true; this.sendeWartende(); },
+			onSuspend: () => { this.bereit = false; },
+		});
+		this.frage(true);
+
+		// Jede Minute neu zeichnen, damit Countdowns stimmen
+		watch.addEventListener("minutechange", () => this.zeige());
 	}
-	// Bildschirm leeren und die aktuelle Verbindung neu aufbauen.
-	zeige(application) {
-		const verbindung = testdaten[this.index];
-		console.log("Ansicht " + this.ansicht + ", Testzustand " + (this.index + 1) + ": " + verbindung.status);
+
+	// Letztes Ergebnis für die aktuelle Richtung aus dem Speicher der Uhr holen
+	ladeGespeichert() {
+		this.daten = null;
+		const text = localStorage.getItem("letzte_" + this.richtung);
+		if (text) {
+			try { this.daten = JSON.parse(text); } catch { this.daten = null; }
+		}
+	}
+
+	// Anfrage ans Handy vormerken und senden, sobald möglich
+	frage(neu) {
+		this.wartend = { richtung: this.richtung, nr: this.nr, neu };
+		abfrageStatus = "laedt";
+		this.zeige();
+		this.sendeWartende();
+	}
+	sendeWartende() {
+		if (!this.bereit || !this.wartend) return;
+		const text = JSON.stringify(this.wartend);
+		console.log("Anfrage ans Handy: " + text);
+		this.message.write(new Map([["ANFRAGE", text]]));
+		this.wartend = null;
+	}
+
+	// Antwort vom Handy
+	empfange() {
+		const antwort = this.message.read();
+		if (antwort.has("VERBINDUNG")) {
+			const text = antwort.get("VERBINDUNG");
+			try {
+				this.daten = JSON.parse(text);
+			} catch {
+				console.log("Antwort nicht lesbar");
+				return;
+			}
+			this.nr = this.daten.nr;
+			abfrageStatus = null;
+			this.fehlerText = null;
+			// Nur die „nächste“ Verbindung als letztes Ergebnis merken
+			if (this.nr === 0) localStorage.setItem("letzte_" + this.richtung, text);
+			console.log("Verbindung erhalten: " + this.daten.status);
+		}
+		if (antwort.has("FEHLER")) {
+			this.fehlerText = antwort.get("FEHLER");
+			abfrageStatus = this.fehlerText;
+			console.log("Fehler vom Handy: " + this.fehlerText);
+		}
+		this.zeige();
+	}
+
+	// Bildschirm leeren und neu aufbauen
+	zeige() {
+		const application = this.application;
 		application.empty();
-		application.add(ANSICHTEN[this.ansicht](verbindung));
+		if (!this.daten) {
+			application.add(this.fehlerText
+				? Meldung("Keine Daten", this.fehlerText)
+				: Meldung("Pendelzug", "Lade Verbindung …"));
+			return;
+		}
+		application.add(ANSICHTEN[this.ansicht](this.daten));
 	}
-	// Auf: vorheriger Testzustand (nach dem ersten kommt wieder der letzte)
+
+	// Auf: frühere Verbindung (bzw. im Testbetrieb: vorheriger Test-Zustand)
 	onPressUp(application) {
-		this.index = (this.index + testdaten.length - 1) % testdaten.length;
-		this.zeige(application);
+		if (TESTBETRIEB) {
+			this.testIndex = (this.testIndex + testdaten.length - 1) % testdaten.length;
+			this.daten = testdaten[this.testIndex];
+			this.zeige();
+		} else {
+			this.nr--;
+			this.frage(false);
+		}
 		return true;
 	}
-	// Ab: nächster Testzustand
+	// Ab: spätere Verbindung (bzw. im Testbetrieb: nächster Test-Zustand)
 	onPressDown(application) {
-		this.index = (this.index + 1) % testdaten.length;
-		this.zeige(application);
+		if (TESTBETRIEB) {
+			this.testIndex = (this.testIndex + 1) % testdaten.length;
+			this.daten = testdaten[this.testIndex];
+			this.zeige();
+		} else {
+			this.nr++;
+			this.frage(false);
+		}
 		return true;
 	}
-	// Select: nächste Ansicht (nur im Testbetrieb, siehe oben)
+	// Select: Piu meldet Drücken und Loslassen getrennt. Wir messen die Zeit
+	// dazwischen: kurz = neu laden, lang = Richtung umschalten.
+	// (Die Aktion passiert beim Loslassen.)
 	onPressSelect(application) {
-		const i = ANSICHT_REIHENFOLGE.indexOf(this.ansicht);
-		this.ansicht = ANSICHT_REIHENFOLGE[(i + 1) % ANSICHT_REIHENFOLGE.length];
-		this.zeige(application);
+		this.selectSeit = Date.now();
+		return true;
+	}
+	onReleaseSelect(application) {
+		const lang = Date.now() - (this.selectSeit ?? Date.now()) >= LANG_MS;
+		if (TESTBETRIEB) {
+			const i = ANSICHT_REIHENFOLGE.indexOf(this.ansicht);
+			this.ansicht = ANSICHT_REIHENFOLGE[(i + 1) % ANSICHT_REIHENFOLGE.length];
+			this.zeige();
+		} else if (lang) {
+			this.richtung = this.richtung === "hin" ? "rueck" : "hin";
+			this.nr = 0;
+			console.log("Richtung umgeschaltet: " + this.richtung);
+			this.ladeGespeichert();
+			this.frage(true);
+		} else {
+			this.frage(true);
+		}
 		return true;
 	}
 }

@@ -3,8 +3,8 @@
 Watchapp für die **Pebble Time 2**. Sie zeigt auf einen Blick, ob die
 Bahnverbindung Halstenbek ⇄ Itzehoe pünktlich ist und ob die Umstiege klappen.
 
-> **Stand:** Schritt 2 – Ansichten A, B und C mit fest eingebauten Testdaten.
-> Echte Verbindungsdaten folgen in Schritt 3.
+> **Stand:** Schritt 3 (in Arbeit) – Verbindungen kommen vom Handy (Transitous).
+> Bis zur Einstellungsseite (Schritt 4) zeigt die Uhr immer Ansicht A.
 
 **Ansicht A – Liste** (Standard), in drei der vier Test-Zustände:
 
@@ -19,11 +19,35 @@ Bahnverbindung Halstenbek ⇄ Itzehoe pünktlich ist und ob die Umstiege klappen
 
 ## Bedienung
 
-| Taste | Funktion (Testbetrieb, Schritt 2) |
+| Taste | Funktion |
 |---|---|
-| Auf / Ab | zwischen den vier Test-Zuständen blättern (pünktlich, knapp, Anschluss weg, Warten am Umstieg) |
-| Select | nächste Ansicht (A → B → C); ab Schritt 4 wird die Ansicht in den Einstellungen gewählt |
+| Auf / Ab | frühere / spätere Verbindung |
+| Select | neu laden |
+| Select lang (≥ 0,7 s) | Richtung umschalten (Hinweg ⇄ Rückweg) |
 | Zurück | App schließen |
+
+Die Richtung wird beim Start nach der Tageszeit gewählt: vormittags Hinweg,
+ab 12 Uhr Rückweg.
+
+**Testbetrieb:** Steht in `src/embeddedjs/main.js` `TESTBETRIEB = true`, zeigt
+die App feste Testdaten. Dann blättern Auf/Ab durch vier Test-Zustände
+(pünktlich, Umstieg knapp, Anschluss weg, Warten am Umstieg) und Select wechselt
+die Ansicht (A → B → C).
+
+## Datenquelle
+
+Die Verbindungen kommen derzeit von **[Transitous](https://transitous.org)**,
+einem freien, gemeinschaftlich betriebenen Fahrplandienst.
+Datenquellen und Lizenzen: <https://transitous.org/sources/>.
+Kartendaten © [OpenStreetMap](https://www.openstreetmap.org/copyright)-Mitwirkende.
+
+Transitous verlangt bei jeder Anfrage eine Kontaktadresse im User-Agent. Sie
+steht in `src/pkjs/konfig.js` (`KONTAKT`). Ist sie leer, sendet die App keine
+Anfrage und zeigt „Kontakt fehlt“.
+
+Später wird auf die hvv-Schnittstelle Geofox umgestellt. Der Handy-Teil ist
+dafür in Adapter (`transitous.js`) und quellenunabhängige Aufbereitung
+(`aufbereitung.js`) getrennt.
 
 ## Technik
 
@@ -79,9 +103,12 @@ Hängt der Emulator: `./pebble.sh kill`, dann `./pebble.sh wipe`, dann neu insta
 
 ```
 src/embeddedjs/main.js        Uhr-Code: Ansichten A, B, C (Piu)
-src/embeddedjs/testdaten.js   drei Beispiel-Verbindungen (bis Schritt 3)
+src/embeddedjs/testdaten.js   vier Beispiel-Verbindungen für den Testbetrieb
 src/embeddedjs/manifest.json  Liste der JavaScript-Module der Uhr
-src/pkjs/index.js             Handy-Code (PKJS), später Verbindungssuche
+src/pkjs/index.js             Handy-Code (PKJS): Anfragen der Uhr beantworten
+src/pkjs/konfig.js            Haltestellen, Kontakt für Transitous, Grenzwerte
+src/pkjs/transitous.js        Adapter für die Verbindungssuche bei Transitous
+src/pkjs/aufbereitung.js      Umstiege, Ampel, Paket für die Uhr (quellenunabhängig)
 src/c/mdbl.c                  startet JavaScript auf der Uhr (Speichergrößen)
 package.json                  App-Daten: Name, UUID, Plattformen
 docker/Dockerfile             Entwicklungsumgebung (Ubuntu 24.04 + Pebble-SDK)

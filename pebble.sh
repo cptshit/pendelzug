@@ -42,10 +42,12 @@ container_starten() {
     # -v Projekt:/work       → der Container sieht und bearbeitet deinen Projektordner
     # -v /tmp/.X11-unix + DISPLAY → das Emulator-Fenster erscheint auf deinem Bildschirm
     #                          (dafür ist einmal pro Sitzung „xhost“ nötig, siehe README)
+    # -e TZ                  → deutsche Zeit im Container (Handy-Teil und Emulator)
     docker run -d --name "$CONTAINER" \
         -v "$PROJEKT":/work \
         -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
         -e DISPLAY="${DISPLAY:-:0}" \
+        -e TZ=Europe/Berlin \
         "$IMAGE" >/dev/null
 }
 

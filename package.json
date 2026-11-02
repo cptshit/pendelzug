@@ -1,7 +1,7 @@
 {
   "name": "pendelzug",
   "author": "Henrik Neumann",
-  "version": "1.0.0",
+  "version": "0.3.0",
   "keywords": [
     "pebble-app"
   ],
@@ -20,7 +20,9 @@
       "watchface": false
     },
     "messageKeys": [
-      "dummy"
+      "ANFRAGE",
+      "VERBINDUNG",
+      "FEHLER"
     ],
     "resources": {
       "media": []

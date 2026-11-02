@@ -15,8 +15,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # „make“ steht nicht in der offiziellen Liste, wird aber gebraucht:
 # mcrun (übersetzt den Uhr-JavaScript-Code) ruft intern make auf.
 # Ebenso libpng: ohne sie startet der Emulator (qemu-pebble) nicht.
+# tzdata: Zeitzonen-Daten, damit Handy-Teil und Emulator deutsche Zeit zeigen.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates curl git python3 make \
+        ca-certificates curl git python3 make tzdata \
         nodejs npm \
         libsdl2-2.0-0 libglib2.0-0 libpixman-1-0 zlib1g libsndio7.0 libpng16-16t64 \
         libx11-6 libxext6 libxcursor1 libxi6 libxrandr2 libxss1 libgl1 \

@@ -1,9 +1,11 @@
 # Pendelzug
 
+<img src="store/icon_144.png" alt="Pendelzug-Logo" width="96" align="right">
+
 Watchapp für die **Pebble Time 2**. Sie zeigt auf einen Blick, ob die
 Bahnverbindung Halstenbek ⇄ Itzehoe pünktlich ist und ob die Umstiege klappen.
 
-> **Stand:** Schritt 5 – echte Verbindungen (Transitous), Einstellungsseite,
+> **Version 1.0.0.** **Stand:** Schritt 5 – echte Verbindungen (Transitous), Einstellungsseite,
 > Automatik mit Wakeup und Vibration. Als Nächstes: Umstellung auf hvv Geofox.
 
 Echte Verbindung im Emulator (Transitous, 02.11.2026):
@@ -167,6 +169,8 @@ src/pkjs/aufbereitung.js      Umstiege, Ampel, Paket für die Uhr (quellenunabh�
 src/c/mdbl.c                  startet JavaScript auf der Uhr (Speichergrößen)
 package.json                  App-Daten: Name, UUID, Plattformen
 docker/Dockerfile             Entwicklungsumgebung (Ubuntu 24.04 + Pebble-SDK)
+resources/images/menu_icon.png Symbol im Menü der Uhr (25×25)
+store/                        Logo, Store-Screenshots, Texte für den Pebble-Store
 docker/browser.sh             Browser-Ersatz im Container (für die Einstellungsseite)
 pebble.sh                     Startskript für die Docker-Umgebung
 ```

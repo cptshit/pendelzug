@@ -7,7 +7,7 @@ module.exports = {
 	// Für den User-Agent, den Transitous bei jeder Anfrage verlangt:
 	// App-Name, Version und eine Kontaktmöglichkeit.
 	APP_NAME: "Pendelzug",
-	VERSION: "0.3.0",
+	VERSION: "1.0.0",
 	// Projekt-Kontaktadresse (E-Mail). Solange sie leer ist, schickt die App
 	// absichtlich KEINE Anfrage an Transitous (Nutzungsbedingungen).
 	KONTAKT: "pendelzug@wortreich.eu",

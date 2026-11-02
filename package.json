@@ -1,7 +1,7 @@
 {
   "name": "pendelzug",
   "author": "Henrik Neumann",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "keywords": [
     "pebble-app"
   ],
@@ -28,7 +28,14 @@
       "EINSTELLUNGEN"
     ],
     "resources": {
-      "media": []
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "MENU_ICON",
+          "file": "images/menu_icon.png",
+          "menuIcon": true
+        }
+      ]
     },
     "capabilities": [
       "configurable"

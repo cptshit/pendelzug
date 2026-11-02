@@ -90,4 +90,7 @@ pebble.sh                     Startskript für die Docker-Umgebung
 
 ## Lizenz
 
-Noch nicht festgelegt (wird vor einer Veröffentlichung entschieden).
+Pendelzug steht unter der **GNU General Public License, Version 3 oder neuer**
+(GPL-3.0-or-later), siehe [LICENSE](LICENSE). Kurz gesagt: Jeder darf den Code
+nutzen, ändern und weitergeben. Wer eine veränderte Version weitergibt, muss
+deren Quellcode ebenfalls unter der GPL offenlegen.

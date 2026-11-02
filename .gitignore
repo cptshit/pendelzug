@@ -1,0 +1,29 @@
+# .gitignore – Dateien, die git NICHT ins Repository übernehmen soll.
+
+# Build-Ergebnisse (entstehen bei jedem „pebble build“ neu)
+build/
+.lock-waf*
+*.pbw
+
+# Node.js-Pakete (werden bei Bedarf neu installiert)
+node_modules/
+
+# Python-Zwischendateien
+__pycache__/
+*.pyc
+
+# Lokale Konfiguration und Zugangsdaten – NIEMALS ins Repo!
+# (z. B. später Geofox-Benutzer/Passwort zum Testen)
+.env
+.env.*
+*.local.js
+*.local.json
+config.local.*
+secrets*
+
+# Editor- und Systemdateien
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store

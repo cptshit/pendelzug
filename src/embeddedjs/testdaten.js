@@ -1,0 +1,73 @@
+// testdaten.js – fest eingebaute Beispiel-Verbindungen für Schritt 1.
+//
+// Warum es diese Datei gibt: Die Uhr-Ansicht soll fertig sein, bevor echte
+// Daten vom Handy kommen (Schritt 3). Deshalb gibt es hier drei typische
+// Situationen, zwischen denen man im Emulator mit Auf/Ab umschaltet.
+//
+// Das Format ist absichtlich genau das, was später PKJS an die Uhr schickt.
+// Dann muss die Ansicht nicht mehr geändert werden, nur die Datenquelle.
+//
+// Aufbau einer Verbindung:
+//   richtung   Text für die Kopfzeile
+//   ampel      "gruen" | "gelb" | "rot" (Farbe des Statusbands)
+//   status     Text im Statusband (Farbe nie allein, immer auch Text)
+//   teile      Liste der Teilstücke, in Fahrtreihenfolge:
+//     art      "zug" (S-Bahn, Regionalzug usw.) oder "fuss" (Fußweg)
+//     linie    Linienname, z. B. "S3"
+//     farbe    Badge-Farbe (Platzhalter, später nach hvv-Vorgaben)
+//     plan     Plan-Abfahrt "HH:MM"
+//     versp    Verspätung in Minuten (0 = pünktlich)
+//     ausfall  true, wenn der Zug ausfällt
+//     ab       Abfahrtsort dieses Teilstücks
+//     gleis    Abfahrtsgleis (oder "" wenn unbekannt)
+//     umstieg  Minuten, die zum Umsteigen bleiben (null beim ersten Teilstück);
+//              negativ = Anschluss nicht mehr erreichbar
+//     dauer    nur bei Fußweg: Gehzeit in Minuten
+//   ankunft    { plan: "HH:MM", versp: Minuten }
+//   stand      Uhrzeit der letzten Aktualisierung "HH:MM"
+//
+// Die Fahrzeiten sind ausgedacht und stimmen nicht mit dem echten Fahrplan überein.
+
+const S3 = "#AA00AA";     // Platzhalter-Farbe S-Bahn
+const REGIO = "#555555";  // Platzhalter-Farbe Regionalzüge
+
+export default [
+	// 1) Alles pünktlich, ein Umstieg mit viel Puffer
+	{
+		richtung: "Halstenbek → Itzehoe",
+		ampel: "gruen",
+		status: "PÜNKTLICH",
+		teile: [
+			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 0, ab: "Halstenbek", gleis: "1", umstieg: null },
+			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", umstieg: 9 },
+		],
+		ankunft: { plan: "07:58", versp: 0 },
+		stand: "07:05",
+	},
+	// 2) S3 verspätet, dadurch wird der erste Umstieg knapp
+	{
+		richtung: "Halstenbek → Itzehoe",
+		ampel: "gelb",
+		status: "UMSTIEG KNAPP",
+		teile: [
+			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 3, ab: "Halstenbek", gleis: "1", umstieg: null },
+			{ art: "zug", linie: "RB71", farbe: REGIO, plan: "07:24", versp: 0, ab: "Pinneberg", gleis: "2", umstieg: 2 },
+			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 1, ab: "Elmshorn", gleis: "3", umstieg: 6 },
+		],
+		ankunft: { plan: "07:58", versp: 1 },
+		stand: "07:08",
+	},
+	// 3) S3 stark verspätet, der Anschluss nach dem Fußweg ist weg
+	{
+		richtung: "Halstenbek → Itzehoe",
+		ampel: "rot",
+		status: "ANSCHLUSS WEG",
+		teile: [
+			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 12, ab: "Halstenbek", gleis: "1", umstieg: null },
+			{ art: "fuss", dauer: 4 },
+			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", umstieg: -3 },
+		],
+		ankunft: { plan: "07:58", versp: 0 },
+		stand: "07:21",
+	},
+];

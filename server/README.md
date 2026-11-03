@@ -7,11 +7,13 @@ Zugangsdaten HVV-Daten bekommt. (Erlaubnis der HBT GmbH liegt vor.)
 ## Aufbau
 
 ```
-server/public/api.php        der einzige öffentlich erreichbare Teil
+server/public/api.php        Hauptprogramm (beantwortet die Anfragen der App)
+server/httpdocs/api.php      öffentlicher Verweis darauf (liegt im Webordner)
 server/lib/gti.php           Konfiguration lesen, GTI signiert aufrufen
 server/lib/speicher.php      Zwischenspeicher und Mengenbegrenzung (Dateien)
 server/konfig.beispiel.txt   Vorlage für die Konfiguration (ohne echte Werte)
 server/lokal-testen.sh       Test auf dem eigenen Rechner
+server/hochladen.sh          Code per SSH auf wortreich.eu bringen
 ```
 
 ## Schnittstelle für die App
@@ -42,6 +44,40 @@ Voraussetzung: PHP (mit curl) und Node.js auf dem Rechner, Zugangsdaten in
 bash server/lokal-testen.sh
 ```
 
-## Auf dem Webspace einrichten
+## Auf dem Webspace einrichten (wortreich.eu)
 
-Folgt in Schritt 2.
+Aufteilung wie bei Eselsohr – nur ein Verweis ist öffentlich:
+
+```
+~/httpdocs/pendelzug/api.php   öffentlich: https://www.wortreich.eu/pendelzug/api.php
+~/pendelzug/                   privat (700), aus dem Netz nicht erreichbar
+    public/api.php, lib/       Code
+    konfig.txt                 Zugangsdaten (600) – nur hier, nie im Repo
+    daten/                     Zwischenspeicher und Zähler
+```
+
+**1. Code hochladen** (auch nach jeder Änderung):
+
+```sh
+bash server/hochladen.sh
+```
+
+**2. Einmalig: Konfiguration anlegen.** Der erste Befehl überträgt die
+Zugangsdaten aus `~/.pendelzug-gti` direkt in die Datei auf dem Webspace (ohne
+Zwischenkopie und ohne Anzeige), der zweite hängt einen geheimen Zufallswert
+an:
+
+```sh
+ssh wortreich 'umask 077; cat > pendelzug/konfig.txt' < ~/.pendelzug-gti
+ssh wortreich 'echo "SALZ=$(openssl rand -hex 32)" >> pendelzug/konfig.txt'
+```
+
+**3. Testen:**
+
+```sh
+curl -s 'https://www.wortreich.eu/pendelzug/api.php?aktion=halt&name=Halstenbek'
+```
+
+Fehlermeldungen des Servers stehen im Plesk-Fehlerprotokoll
+(`~/logs/wortreich.eu/`), immer mit „Pendelzug:“ am Anfang und nie mit
+Zugangsdaten.

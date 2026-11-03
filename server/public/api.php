@@ -8,10 +8,10 @@
 // Erlaubnis der HBT GmbH), stellt die Anfragen an den HVV und gibt die
 // Antwort an die App weiter. Die Zugangsdaten verlassen den Server nie.
 //
-// Diese Datei liegt im ÖFFENTLICHEN Ordner des Webspace, z. B.
-//   https://wortreich.eu/pendelzug/api.php
-// Alles Schutzwürdige (Zugangsdaten, Zwischenspeicher) liegt AUSSERHALB davon,
-// siehe server/README.md.
+// Aufruf von außen: https://www.wortreich.eu/pendelzug/api.php
+// Im öffentlichen Ordner (httpdocs/pendelzug/) liegt nur ein Verweis
+// (server/httpdocs/api.php). Diese Datei selbst liegt mit lib/, Zugangsdaten
+// und Zwischenspeicher in ~/pendelzug/, außerhalb des Webordners.
 //
 // Zwei Aktionen (HTTP GET):
 //   api.php?aktion=halt&name=Halstenbek

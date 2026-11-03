@@ -29,18 +29,15 @@ const KONFIG_STANDARD = [
 // -----------------------------------------------------------------------------
 // Wo liegt die Konfigurationsdatei?
 //   1. Umgebungsvariable PENDELZUG_CONFIG (für den Test auf dem Rechner)
-//   2. Ordner „pendelzug-privat“ neben dem Webordner (auf dem Webspace)
+//   2. konfig.txt neben den Ordnern lib/ und public/ – auf dem Webspace also
+//      ~/pendelzug/konfig.txt (außerhalb des Webordners httpdocs).
 // -----------------------------------------------------------------------------
 function konfigPfad(): ?string
 {
     $kandidaten = [];
     $env = getenv('PENDELZUG_CONFIG');
     if ($env) $kandidaten[] = $env;
-    if (!empty($_SERVER['DOCUMENT_ROOT'])) {
-        $kandidaten[] = dirname($_SERVER['DOCUMENT_ROOT']) . '/pendelzug-privat/konfig.txt';
-    }
-    // server/lib → server → Projekt bzw. Webspace-Wurzel
-    $kandidaten[] = dirname(__DIR__, 2) . '/pendelzug-privat/konfig.txt';
+    $kandidaten[] = dirname(__DIR__) . '/konfig.txt';
     foreach ($kandidaten as $p) {
         if (is_readable($p)) return $p;
     }

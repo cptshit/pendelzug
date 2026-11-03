@@ -1,7 +1,7 @@
 # konfig.beispiel.txt – Vorlage für die Server-Konfiguration
 #
-# Auf dem Webspace als  pendelzug-privat/konfig.txt  ablegen – AUSSERHALB des
-# öffentlichen Webordners (siehe server/README.md). Rechte: 600.
+# Auf dem Webspace als  ~/pendelzug/konfig.txt  ablegen – AUSSERHALB des
+# öffentlichen Webordners httpdocs (siehe server/README.md). Rechte: 600.
 # Diese Vorlage enthält KEINE echten Werte und darf ins Repository.
 
 # Geofox-Zugangsdaten (von der HBT GmbH)

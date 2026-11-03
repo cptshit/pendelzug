@@ -42,5 +42,5 @@ CLAUDE.md
 tools/ausgabe/
 
 # Server: Zugangsdaten und Zwischenspeicher (nur auf dem Webspace bzw. lokal)
-pendelzug-privat/
+server/konfig.txt
 server/daten/

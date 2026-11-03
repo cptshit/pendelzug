@@ -37,3 +37,6 @@ credentials*
 
 # Arbeitsanweisungen für Claude Code – bleiben nur lokal
 CLAUDE.md
+
+# Rohantworten der GTI-Testskripte (tools/gti-route.js) – nur zum Ansehen
+tools/ausgabe/

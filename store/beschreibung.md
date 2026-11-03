@@ -1,7 +1,22 @@
 # Pendelzug – Angaben für den Pebble-Store
 
-Veröffentlicht am 02.11.2026. Neue Versionen im Developer Dashboard über
-**New Release** hochladen (Version in package.json vorher erhöhen).
+Veröffentlicht am 02.11.2026, Version 1.2.0 am 03.11.2026.
+
+**Neue Version per Kommandozeile** (Version in package.json vorher erhöhen,
+`./pebble.sh build`, `build/work.pbw` nach `store/pendelzug-X.Y.Z.pbw` kopieren):
+
+```sh
+./pebble.sh login --status                 # muss „logged in“ zeigen, sonst:
+./pebble.sh login --no-open-browser        # Adresse im Browser öffnen, anmelden
+./pebble.sh publish --pbw store/pendelzug-X.Y.Z.pbw \
+    --release-notes "…" \
+    --screenshots store/screenshots/emery_*.png --replace-screenshots \
+    --is-published --non-interactive
+```
+
+Die **Beschreibung** einer bestehenden App ändert `publish` nicht – die nur im
+Developer Dashboard bearbeiten. Alternativ geht alles im Dashboard über
+**New Release**.
 
 Zum Kopieren in das Formular im Developer Dashboard
 (<https://developer.repebble.com/dashboard> → **New**).

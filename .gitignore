@@ -20,6 +20,13 @@ __pycache__/
 *.local.json
 config.local.*
 secrets*
+# Geofox-Zugangsdaten, falls jemand die Datei aus dem Home-Verzeichnis
+# versehentlich ins Projekt kopiert, und weitere typische Schlüsseldateien
+.pendelzug-gti*
+*gti-zugang*
+credentials*
+*.pem
+*.key
 
 # Editor- und Systemdateien
 .vscode/

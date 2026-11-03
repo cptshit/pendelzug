@@ -101,9 +101,10 @@ module.exports = [
 			{ type: "heading", defaultValue: "Datenquelle" },
 			{
 				type: "text",
-				defaultValue: "Derzeit: <a href=\"https://transitous.org\">Transitous</a> " +
+				defaultValue: "Mit Geofox-Zugang (Benutzer und Passwort unten): hvv Geofox. " +
+					"Ohne: <a href=\"https://transitous.org\">Transitous</a> " +
 					"(<a href=\"https://transitous.org/sources/\">Datenquellen und Lizenzen</a>, " +
-					"Kartendaten © OpenStreetMap-Mitwirkende). Später: hvv Geofox.",
+					"Kartendaten © OpenStreetMap-Mitwirkende).",
 			},
 			{
 				type: "input",
@@ -116,7 +117,7 @@ module.exports = [
 				type: "input",
 				messageKey: "geofoxPasswort",
 				label: "Geofox-Passwort",
-				description: "Benutzer und Passwort bleiben auf dem Handy und werden nie an die Uhr geschickt. Sie werden erst mit der Umstellung auf Geofox benutzt.",
+				description: "Benutzer und Passwort bleiben auf dem Handy und werden nie an die Uhr geschickt. Sind beide Felder ausgefüllt, fragt die App beim HVV (Geofox) statt bei Transitous.",
 				defaultValue: "",
 				attributes: { type: "password", autocomplete: "off" },
 			},

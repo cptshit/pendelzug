@@ -26,11 +26,22 @@ var clayConfig = require("./config");
 var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
 // Eigenes Feld „Haltestelle mit Vorschlagssuche“ für Start und Ziel
 clay.registerComponent(require("./haltestelle-feld"));
-// Aktuelle Datenquelle. Für Geofox (Schritt 6) wird nur diese Zeile geändert.
-var quelle = require("./transitous");
+// Datenquellen (Adapter). Beide bieten dieselbe Funktion „suche“ und liefern
+// dasselbe neutrale Format.
+var transitous = require("./transitous");
+var geofox = require("./geofox");
 
-// Zwischenspeicher der letzten Suche
-var cache = { richtung: null, zeit: 0, verbindungen: [] };
+// Welche Quelle gilt? Sind Geofox-Benutzer und -Passwort eingetragen, fragen
+// wir den HVV (Geofox) – genauere Daten, offizielle Echtzeit. Sonst
+// Transitous, das ohne Zugangsdaten funktioniert (z. B. für alle, die die App
+// aus dem Store haben und keinen Geofox-Zugang besitzen).
+function aktuelleQuelle() {
+	var e = einstellungen.lesen();
+	return String(e.geofoxBenutzer || "").trim() && e.geofoxPasswort ? geofox : transitous;
+}
+
+// Zwischenspeicher der letzten Suche (mit Name der Quelle, die sie geliefert hat)
+var cache = { richtung: null, zeit: 0, verbindungen: [], quelle: "" };
 
 // Die Kopfzeile der Uhr („Start → Ziel“, fett 18 px) fasst etwa 22 Zeichen.
 // Sind die Namen zusammen länger, kürzen wir beide gleichmäßig mit „…“.
@@ -128,7 +139,7 @@ function antworte(anfrage) {
 	var paket = aufbereitung.paket(liste, index, {
 		richtung: kopfzeile(s.von.name, s.nach.name),
 		ziel: s.nach.name,
-		quelle: quelle.name,
+		quelle: cache.quelle,
 		nr: index - basis,   // 0 = nächste, negativ = schon unterwegs, positiv = später
 	});
 	var text = JSON.stringify(paket);
@@ -137,8 +148,10 @@ function antworte(anfrage) {
 }
 
 function bearbeite(anfrage) {
+	var quelle = aktuelleQuelle();
 	var alt = (Date.now() - cache.zeit) / 1000;
-	if (!anfrage.neu && cache.richtung === anfrage.richtung && alt < konfig.CACHE_SEKUNDEN) {
+	if (!anfrage.neu && cache.richtung === anfrage.richtung && cache.quelle === quelle.name &&
+		alt < konfig.CACHE_SEKUNDEN) {
 		antworte(anfrage);
 		return;
 	}
@@ -147,11 +160,12 @@ function bearbeite(anfrage) {
 	// Ab 60 Minuten vor jetzt suchen, damit auch Verbindungen dabei sind,
 	// in denen man gerade sitzt (für „frühere Verbindung“ und Ansicht C).
 	var ab = new Date(Date.now() - 60 * 60000);
+	console.log("Datenquelle: " + quelle.name);
 	quelle.suche(s.von, s.nach, ab,
 		function (fehler, verbindungen) {
 			if (fehler) { sendeFehler(fehler); return; }
-			cache = { richtung: anfrage.richtung, zeit: Date.now(), verbindungen: verbindungen };
-			console.log(verbindungen.length + " Verbindungen gefunden");
+			cache = { richtung: anfrage.richtung, zeit: Date.now(), verbindungen: verbindungen, quelle: quelle.name };
+			console.log(verbindungen.length + " Verbindungen gefunden (" + quelle.name + ")");
 			antworte(anfrage);
 		});
 }
@@ -207,11 +221,13 @@ Pebble.addEventListener("webviewclosed", function (e) {
 	clay.getSettings(e.response, false);
 	// Die Uhr fragt danach die angezeigte Verbindung neu an. Das Handy bereitet
 	// sie aus dem Zwischenspeicher mit der neuen Mindest-Umstiegszeit auf –
-	// ohne neue Anfrage an Transitous. Nur wenn sich Start oder Ziel geändert
-	// haben, ist der Zwischenspeicher wertlos und wird geleert.
+	// ohne neue Anfrage an die Datenquelle. Nur wenn sich Start oder Ziel
+	// geändert haben, ist der Zwischenspeicher wertlos und wird geleert.
+	// (Wechselt die Datenquelle, weil Geofox-Zugangsdaten eingetragen oder
+	// gelöscht wurden, merkt bearbeite() das selbst und fragt neu.)
 	if (JSON.stringify(strecke("hin")) !== vorher) {
 		console.log("Strecke geändert: " + strecke("hin").von.name + " → " + strecke("hin").nach.name);
-		cache = { richtung: null, zeit: 0, verbindungen: [] };
+		cache = { richtung: null, zeit: 0, verbindungen: [], quelle: "" };
 	}
 	sendeEinstellungen();
 });

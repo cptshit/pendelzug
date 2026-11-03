@@ -8,7 +8,7 @@ Zum Kopieren in das Formular im Developer Dashboard
 
 | Feld | Inhalt |
 |---|---|
-| Datei (.pbw) | `store/pendelzug-1.1.0.pbw` (Kopie von `build/work.pbw` nach `./pebble.sh build`) |
+| Datei (.pbw) | `store/pendelzug-1.2.0.pbw` (Kopie von `build/work.pbw` nach `./pebble.sh build`) |
 | App Name | Pendelzug |
 | Category | Tools & Utilities |
 | Small Icon (80×80) | `store/icon_80.png` |
@@ -24,7 +24,7 @@ Zum Kopieren in das Formular im Developer Dashboard
 (reiner Text, so übernehmen)
 
 ```
-Pendelzug zeigt auf der Pebble Time 2, ob deine Bahnverbindung pünktlich ist und ob die Umstiege klappen.
+Pendelzug zeigt auf der Pebble Time 2, ob deine Bahnverbindung pünktlich ist und ob die Umstiege klappen – mit Echtzeitdaten des HVV (Hamburger Verkehrsverbund).
 
 - Ampel auf einen Blick: grün = pünktlich, gelb = verspätet oder Umstieg knapp, rot = Ausfall oder Anschluss weg – immer mit Text, nicht nur Farbe.
 - Alle Teilstücke mit Linie, Plan-Zeit, Verspätung und Umstiegszeit; bei verpasstem Anschluss die Ankunft der nächsten Verbindung.
@@ -34,9 +34,17 @@ Pendelzug zeigt auf der Pebble Time 2, ob deine Bahnverbindung pünktlich ist un
 
 Einstellungen über das Zahnrad in der Pebble-App: Start und Ziel (mit Vorschlagssuche), Ansicht, Mindest-Umstiegszeit, Automatik-Fenster.
 
-Daten: Transitous (https://transitous.org, Quellen: https://transitous.org/sources/), Kartendaten © OpenStreetMap-Mitwirkende. Alle Angaben ohne Gewähr.
+Gebiet: Haltestellen im HVV und in Teilen Norddeutschlands (z. B. Kiel, Lübeck) – nicht ganz Deutschland.
+
+Daten: hvv / HBT GmbH (Geofox). Die App fragt über den Pendelzug-Server (wortreich.eu); man braucht keinen eigenen Zugang. Der Server erfährt dabei Start, Ziel und Uhrzeit der Suche sowie die IP-Adresse des Handys. Die IP-Adresse wird nicht gespeichert, Suchergebnisse nur kurz zwischengespeichert. Alle Angaben ohne Gewähr.
 
 Freie Software (GPL-3.0), Quellcode: https://github.com/cptshit/pendelzug
+```
+
+## Release Notes 1.2.0
+
+```
+Neue Datenquelle: Die Verbindungen kommen jetzt mit Echtzeit direkt vom HVV (über den Pendelzug-Server, kein eigener Zugang nötig). Züge ohne Echtzeitdaten sind grau statt „+0“. Linien in ihren echten Farben (S3, RB61, RE6 …). Haltestellen-Vorschläge ebenfalls vom HVV – deshalb nur noch Haltestellen im HVV-Gebiet und in Teilen Norddeutschlands. Gespeicherte Start- und Zielwerte bleiben erhalten.
 ```
 
 ## Release Notes 1.1.0

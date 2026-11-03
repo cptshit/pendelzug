@@ -8,10 +8,9 @@ frei wählbar (Standard: Halstenbek ⇄ Itzehoe).
 
 **Im Pebble-Store (nicht gelistet, nur per Link):** <https://apps.repebble.com/b7e5b4b47e684f52b75448df>
 
-> **Version 1.1.0.** **Stand:** Schritt 6 – echte Verbindungen vom HVV (Geofox) mit Echtzeit,
+> **Version 1.2.0.** **Stand:** Schritt 6 – echte Verbindungen vom HVV (Geofox) mit Echtzeit,
 > Linienfarben, Einstellungsseite mit frei wählbarem Start und Ziel, Automatik mit Wakeup und
 > Vibration. HVV-Daten für alle über den Pendelzug-Server, auch für die Haltestellen-Vorschläge.
-> Als Nächstes: Store-Version 1.2.0.
 
 Echte Verbindung im Emulator (hvv Geofox, 03.11.2026):
 

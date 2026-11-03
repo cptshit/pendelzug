@@ -10,8 +10,8 @@ frei wählbar (Standard: Halstenbek ⇄ Itzehoe).
 
 > **Version 1.1.0.** **Stand:** Schritt 6 – echte Verbindungen vom HVV (Geofox) mit Echtzeit,
 > Linienfarben, Einstellungsseite mit frei wählbarem Start und Ziel, Automatik mit Wakeup und
-> Vibration. HVV-Daten für alle über den Pendelzug-Server. Als Nächstes: Haltestellen-Vorschläge
-> ebenfalls über den Server, danach Store-Version 1.2.0.
+> Vibration. HVV-Daten für alle über den Pendelzug-Server, auch für die Haltestellen-Vorschläge.
+> Als Nächstes: Store-Version 1.2.0.
 
 Echte Verbindung im Emulator (hvv Geofox, 03.11.2026):
 
@@ -129,10 +129,13 @@ der Anfragen. IP-Adressen speichert er nicht.
 - Nutzungsbedingungen, kurz: App bleibt kostenlos, Serverlast gering halten
   (die App merkt sich Ergebnisse 90 Sekunden und die Haltestellen dauerhaft),
   hvv-Liniendarstellung verwenden.
-- Die **Vorschlagssuche** für Start und Ziel auf der Einstellungsseite nutzt
-  noch [Transitous](https://transitous.org)
-  ([Datenquellen und Lizenzen](https://transitous.org/sources/)); sie wird als
-  Nächstes auf den Pendelzug-Server umgestellt.
+- Auch die **Vorschlagssuche** für Start und Ziel auf der Einstellungsseite
+  fragt über den Pendelzug-Server beim HVV.
+- **Gebiet:** Der HVV kennt Haltestellen im Hamburger Verkehrsverbund und in
+  Teilen Norddeutschlands (z. B. Kiel, Lübeck), aber nicht ganz Deutschland.
+- Bis Version 1.1.0 kamen die Daten von [Transitous](https://transitous.org).
+  Gespeicherte Start- und Zielwerte aus dieser Zeit funktionieren weiter: Die
+  App sucht die Haltestelle dann einmal beim HVV nach Name und Lage.
 
 Der Handy-Teil ist in Adapter (`geofox.js`) und quellenunabhängige
 Aufbereitung (`aufbereitung.js`) getrennt. Unten auf der Uhr steht
@@ -215,14 +218,13 @@ src/embeddedjs/testdaten.js   vier Beispiel-Verbindungen für den Testbetrieb
 src/embeddedjs/automatik.js   Regeln für Automatik-Fenster und Vibration
 src/embeddedjs/manifest.json  Liste der JavaScript-Module der Uhr
 src/pkjs/index.js             Handy-Code (PKJS): Anfragen der Uhr beantworten
-src/pkjs/konfig.js            Standard-Haltestellen, Kontakt, Zwischenspeicher-Dauer
+src/pkjs/konfig.js            Standard-Haltestellen, Server-Adresse, Zwischenspeicher-Dauer
 src/pkjs/config.js            Aufbau der Einstellungsseite (Clay)
 src/pkjs/haltestelle-feld.js  Clay-Feld „Haltestelle“ mit Vorschlagssuche
 src/pkjs/einstellungen.js     Einstellungen lesen, Teil für die Uhr (ohne Zugangsdaten)
 src/pkjs/geofox.js            Adapter für den HVV (Geofox GTI): über den Server oder direkt
 src/pkjs/hmac-sha1.js         Signatur für Geofox-Anfragen
 src/pkjs/linienfarben.js      Farben der Linien-Badges
-src/pkjs/transitous.js        alter Transitous-Adapter (unbenutzt, wird entfernt)
 src/pkjs/aufbereitung.js      Umstiege, Ampel, Paket für die Uhr (quellenunabhängig)
 src/c/mdbl.c                  startet JavaScript auf der Uhr (Speichergrößen)
 package.json                  App-Daten: Name, UUID, Plattformen

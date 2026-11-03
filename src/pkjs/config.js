@@ -103,8 +103,8 @@ module.exports = [
 				type: "text",
 				defaultValue: "Die Verbindungen kommen vom HVV (Geofox) über den Pendelzug-Server " +
 					"auf wortreich.eu. Wer einen eigenen Geofox-Zugang hat, kann ihn unten eintragen; " +
-					"dann fragt die App direkt beim HVV. Die Haltestellen-Vorschläge oben kommen " +
-					"noch von <a href=\"https://transitous.org\">Transitous</a>.",
+					"dann fragt die App direkt beim HVV. Verfügbar sind Haltestellen im Gebiet " +
+					"des HVV und in Teilen Norddeutschlands.",
 			},
 			{
 				type: "input",

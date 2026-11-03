@@ -3,7 +3,8 @@
 //
 // Clay kennt von sich aus nur einfache Felder (Text, Auswahl, Schalter …).
 // Für Start und Ziel brauchen wir mehr: Man tippt ein paar Buchstaben, das
-// Feld fragt Transitous nach passenden Haltestellen und zeigt Vorschläge.
+// Feld fragt den Pendelzug-Server (der fragt den HVV, Geofox „checkName“) nach
+// passenden Haltestellen und zeigt Vorschläge.
 // Gespeichert wird NUR ein angetippter Vorschlag – frei getippter Text, zu dem
 // es keine Haltestelle gibt, kann man nicht speichern.
 //
@@ -21,10 +22,13 @@
 // mancher Handys ältere Browser-Versionen hat.
 //
 // Der gespeicherte Wert ist ein JSON-Text, z. B.
-//   {"id":"de-DELFI_de:01056:98950","name":"Halstenbek","lat":53.63,"lon":9.84}
-// id   = Haltestellen-Kennung bei Transitous (damit sucht transitous.js)
-// name = Anzeigename (für die Uhr und für einen späteren Wechsel zu Geofox)
+//   {"id":"Master:98950","name":"Halstenbek","lat":53.63,"lon":9.84}
+// id   = Haltestellen-Kennung beim HVV (Geofox)
+// name = Anzeigename (für die Kopfzeile der Uhr)
 // lat/lon = Koordinaten (für die Vorschlagssuche: Haltestellen in der Nähe zuerst)
+// Ältere Versionen (bis 1.1.0) speicherten Transitous-Kennungen wie
+// „de-DELFI_de:01056:98950“. Damit kommt geofox.js ebenfalls zurecht: Es sucht
+// die Haltestelle dann einmal per Name und Koordinaten.
 
 module.exports = {
 	name: "haltestelle",
@@ -88,19 +92,20 @@ module.exports = {
 		var liste = wurzel.querySelector(".hs-liste");
 		var hinweis = wurzel.querySelector(".hs-hinweis");
 
-		var URL = "https://api.transitous.org/api/v1/geocode";
-		var WARTEZEIT = 300;     // ms nach dem letzten Tastendruck, dann erst suchen
-		var MIN_ZEICHEN = 2;
+		// Adresse des Pendelzug-Servers. Steht auch in konfig.js (SERVER) –
+		// hier muss sie noch einmal stehen, weil diese Funktion nichts von
+		// außen benutzen darf (siehe oben).
+		var URL = "https://www.wortreich.eu/pendelzug/api.php";
+		var WARTEZEIT = 400;     // ms nach dem letzten Tastendruck, dann erst suchen
+		var MIN_ZEICHEN = 3;     // ab 3 Buchstaben (spart Anfragen beim HVV)
 		var ANZEIGEN = 8;        // so viele Vorschläge zeigen
-		// Verkehrsmittel, die als „Bahn“ zählen (Bahnhöfe stehen weiter oben)
-		var BAHN = ["HIGHSPEED_RAIL", "LONG_DISTANCE", "NIGHT_RAIL", "REGIONAL_FAST_RAIL",
-			"REGIONAL_RAIL", "SUBURBAN", "RAIL", "METRO", "SUBWAY"];
+		// Verkehrsmittel laut HVV („serviceTypes“), die als „Bahn“ zählen –
+		// Bahnhöfe stehen weiter oben
+		var BAHN = ["s", "u", "r", "a", "train"];
 		// Kurze deutsche Namen für die Verkehrsmittel in der Vorschlagsliste
 		var NAMEN = {
-			HIGHSPEED_RAIL: "Fernverkehr", LONG_DISTANCE: "Fernverkehr", NIGHT_RAIL: "Nachtzug",
-			REGIONAL_FAST_RAIL: "Regionalzug", REGIONAL_RAIL: "Regionalzug", RAIL: "Bahn",
-			SUBURBAN: "S-Bahn", METRO: "U-Bahn", SUBWAY: "U-Bahn", TRAM: "Straßenbahn",
-			BUS: "Bus", COACH: "Fernbus", FERRY: "Fähre",
+			s: "S-Bahn", u: "U-Bahn", r: "Regionalzug", a: "AKN", train: "Bahn",
+			bus: "Bus", ship: "Fähre",
 		};
 
 		var zeitgeber = null;     // für das Warten nach dem Tippen
@@ -134,11 +139,10 @@ module.exports = {
 			return Math.sqrt(dx * dx + dy * dy);
 		}
 
-		// Ort für die zweite Zeile: der „Standard“-Bereich (meist die Gemeinde)
+		// Ort für die zweite Zeile – nur, wenn er nicht schon im Namen steht
+		// (der HVV schreibt z. B. „Halstenbek, Witt Lönn“ mit Ort davor)
 		function ortVon(t) {
-			var areas = t.areas || [];
-			for (var i = 0; i < areas.length; i++) if (areas[i]["default"]) return areas[i].name;
-			return areas.length ? areas[areas.length - 1].name : "";
+			return t.ort && t.name.indexOf(t.ort) < 0 ? t.ort : "";
 		}
 
 		function verkehrsmittel(t) {
@@ -151,7 +155,7 @@ module.exports = {
 			return texte.join(", ");
 		}
 
-		// „Intelligente“ Reihenfolge: Transitous liefert schon eine sinnvolle
+		// „Intelligente“ Reihenfolge: Der HVV liefert schon eine sinnvolle
 		// Reihenfolge (Platz 0, 1, 2 …). Davon ziehen wir Punkte ab für
 		//   - Bahnhöfe (S-Bahn, Regionalzug, …): für eine Bahn-App wichtiger
 		//   - Nähe zum Bezugspunkt: Pendler suchen meist in ihrer Gegend
@@ -175,9 +179,8 @@ module.exports = {
 			return bewertet.map(function (b) { return b.t; });
 		}
 
-		// Transitous sammelt Fahrpläne aus vielen Quellen. Dieselbe Haltestelle
-		// kommt deshalb manchmal doppelt vor (gleicher Name, fast gleicher Ort).
-		// Wir behalten nur den ersten, also besser bewerteten Eintrag.
+		// Zur Sicherheit: Dieselbe Haltestelle (gleicher Name, fast gleicher Ort)
+		// nur einmal zeigen – den ersten, also besser bewerteten Eintrag.
 		function ohneDoppelte(treffer) {
 			var behalten = [];
 			treffer.forEach(function (t) {
@@ -244,26 +247,36 @@ module.exports = {
 
 		function suche(text) {
 			var nr = ++anfrageNr;
-			var url = URL + "?type=STOP&language=de&numResults=15&text=" + encodeURIComponent(text);
-			var bezug = bezugspunkt();
-			if (bezug) url += "&place=" + bezug.lat + "," + bezug.lon;
+			var url = URL + "?aktion=halt&name=" + encodeURIComponent(text);
 			zeigeHinweis("Suche …");
-			// Hinweis: Einen eigenen User-Agent kann eine Webseite nicht setzen
-			// (verbietet der Browser). Transitous erlaubt Abfragen aus dem Browser
-			// (Antwort-Kopf Access-Control-Allow-Origin: *).
+			// Der Server erlaubt Abfragen aus dem Browser (Antwort-Kopf
+			// Access-Control-Allow-Origin: *), siehe server/public/api.php.
 			var xhr = new XMLHttpRequest();
 			xhr.open("GET", url, true);
 			xhr.timeout = 10000;
 			xhr.onload = function () {
 				if (nr !== anfrageNr) return;   // inzwischen weitergetippt
-				var treffer = null;
-				try { treffer = JSON.parse(xhr.responseText); } catch (e) { treffer = null; }
-				if (xhr.status !== 200 || !treffer) {
-					zeigeHinweis("Suche gerade nicht möglich (Fehler " + xhr.status + ")", true);
+				var antwort = null;
+				try { antwort = JSON.parse(xhr.responseText); } catch (e) { antwort = null; }
+				if (xhr.status !== 200 || !antwort || !antwort.halte) {
+					zeigeHinweis(antwort && antwort.fehler ? antwort.fehler
+						: "Suche gerade nicht möglich (Fehler " + xhr.status + ")", true);
 					return;
 				}
-				treffer = ohneDoppelte(sortiere(treffer.filter(function (t) { return t.id && t.name; })))
-					.slice(0, ANZEIGEN);
+				// HVV-Format in unser Format: Name mit Ort („Halstenbek, Witt Lönn“),
+				// Koordinaten (x = Längengrad, y = Breitengrad), Verkehrsmittel
+				var treffer = antwort.halte.filter(function (h) { return h.id && h.name; }).map(function (h) {
+					var c = h.coordinate || {};
+					return {
+						id: h.id,
+						name: h.combinedName || h.name,
+						ort: h.city || "",
+						lat: c.y,
+						lon: c.x,
+						modes: h.serviceTypes || [],
+					};
+				});
+				treffer = ohneDoppelte(sortiere(treffer)).slice(0, ANZEIGEN);
 				if (!treffer.length) {
 					leereListe();
 					zeigeHinweis("Keine Haltestelle gefunden", true);

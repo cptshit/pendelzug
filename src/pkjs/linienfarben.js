@@ -39,7 +39,7 @@ var STANDARD = "#555555";
 
 // Beliebige Farbe „#RRGGBB“ (oder „RRGGBB“) auf die nächste Uhr-Farbe runden,
 // jeden Anteil einzeln. Nur für Linien, die nicht in der Tabelle stehen, aber
-// eine Farbe aus den Daten mitbringen (Transitous liefert „routeColor“).
+// eine Farbe aus den Daten mitbringen (derzeit liefert keine Quelle eine).
 function aufUhrFarbe(hex) {
 	var h = String(hex).replace("#", "");
 	if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
@@ -60,7 +60,7 @@ function helligkeit(hex) {
 
 // Farbe und Schriftfarbe für eine Linie.
 //   linie       Linienname, z. B. „RB61“
-//   datenFarbe  optional: Farbe aus der Datenquelle (z. B. Transitous)
+//   datenFarbe  optional: Farbe aus der Datenquelle, falls eine sie liefert
 // Ergebnis: { farbe: "#RRGGBB", schrift: "#000000" oder undefined (= weiß) }
 function fuer(linie, datenFarbe) {
 	var eintrag = TABELLE[String(linie).replace(/\s+/g, "")];

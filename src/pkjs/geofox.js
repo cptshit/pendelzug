@@ -120,15 +120,20 @@ function gti(methode, daten, callback) {
 // -----------------------------------------------------------------------------
 // Haltestelle bei Geofox finden
 // -----------------------------------------------------------------------------
-// Start und Ziel in den Einstellungen stammen aus der Vorschlagssuche von
-// Transitous (Kennung wie „de-DELFI_de:01056:98950“). Geofox hat eigene
-// Kennungen („Master:98950“). Wir suchen deshalb einmal per checkName nach
-// dem Namen und nehmen unter den Bahnhöfen/Haltestellen den, der am nächsten
-// an den gespeicherten Koordinaten liegt. (Bei „Halstenbek“ kommen sonst auch
-// Bushaltestellen wie „Halstenbeker Stieg“ in Frage.)
-// Das Ergebnis merken wir uns im localStorage – danach kostet es keine
-// Anfrage mehr.
+// Start und Ziel aus den Einstellungen tragen seit Version 1.2.0 schon die
+// HVV-Kennung („Master:98950“) – dann ist nichts zu tun.
+// Ältere Einstellungen (bis 1.1.0) haben Transitous-Kennungen wie
+// „de-DELFI_de:01056:98950“. Dann suchen wir einmal per checkName nach dem
+// Namen und nehmen unter den Bahnhöfen/Haltestellen den, der am nächsten an
+// den gespeicherten Koordinaten liegt. (Bei „Halstenbek“ kommen sonst auch
+// Bushaltestellen wie „Halstenbeker Stieg“ in Frage.) Das Ergebnis merken wir
+// uns im localStorage – danach kostet es keine Anfrage mehr.
 function haltestelle(halt, callback) {
+	// HVV-Kennung: Buchstaben, Doppelpunkt, Ziffern (z. B. „Master:98950“)
+	if (/^[A-Za-z]+:\d+$/.test(halt.id)) {
+		callback(null, { name: halt.name, id: halt.id, type: "STATION" });
+		return;
+	}
 	var schluessel = "geofox_halt_" + halt.id;
 	var gespeichert = localStorage.getItem(schluessel);
 	if (gespeichert) {

@@ -35,7 +35,7 @@
 //              ersatz nur bei Rot: Ankunft der nächsten Verbindung ohne Problem
 //   stand      Uhrzeit der letzten Aktualisierung "HH:MM"
 //   quelle     Name der Datenquelle für den Hinweis „Daten: … · ohne Gewähr“
-//              (setzt später der Adapter in PKJS: „Transitous“, ab Geofox „hvv“)
+//              (setzt der Adapter in PKJS: „hvv“)
 //   jetzt      NUR IN DEN TESTDATEN: feste Uhrzeit „HH:MM“, mit der Countdowns
 //              gerechnet werden, damit sie zu den ausgedachten Fahrzeiten passen.
 //              Ohne dieses Feld (ab Schritt 3) nimmt die App die echte Uhrzeit.
@@ -63,7 +63,7 @@ export default [
 			{ art: "zug", linie: "RE6", farbe: RE6, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: 9 },
 		],
 		ankunft: { plan: "07:58", versp: 0 },
-		quelle: "Transitous",
+		quelle: "hvv",
 		stand: "07:05",
 		jetzt: "07:06",   // vor der Abfahrt der S3
 	},
@@ -79,7 +79,7 @@ export default [
 			{ art: "zug", linie: "RE6", farbe: RE6, plan: "07:41", versp: 1, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 1, umstieg: 6 },
 		],
 		ankunft: { plan: "07:58", versp: 1 },
-		quelle: "Transitous",
+		quelle: "hvv",
 		stand: "07:16",
 		jetzt: "07:17",   // schon in der S3, Umstieg in Pinneberg steht bevor
 	},
@@ -95,7 +95,7 @@ export default [
 			{ art: "zug", linie: "RE6", farbe: RE6, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: -3 },
 		],
 		ankunft: { plan: "07:58", versp: 0, ersatz: "08:21" },
-		quelle: "Transitous",
+		quelle: "hvv",
 		stand: "07:21",
 		jetzt: "07:22",   // S3 fährt wegen Verspätung erst 07:28
 	},
@@ -111,7 +111,7 @@ export default [
 			{ art: "zug", linie: "RE6", farbe: RE6, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: 7 },
 		],
 		ankunft: { plan: "07:58", versp: 0 },
-		quelle: "Transitous",
+		quelle: "hvv",
 		stand: "07:21",
 		jetzt: "07:22",   // S3 seit 07:18 angekommen, RB71 fährt 07:24
 	},

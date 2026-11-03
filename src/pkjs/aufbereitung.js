@@ -19,7 +19,7 @@ function minuten(ms) {
 
 // Umstiegszeit je Zug (null beim ersten Zug) = Zeit von der Ist-Ankunft des
 // vorigen Zugs bis zur Ist-Abfahrt dieses Zugs. Ein Fußweg dazwischen zählt
-// mit hinein. Grund: Transitous plant Fußwege oft großzügig (z. B. 7 Min
+// mit hinein. Grund: Fahrplanauskünfte planen Fußwege oft großzügig (z. B. 7 Min
 // Hamburg-Altona → S-Bahn Altona) und lässt danach 0 Min Puffer. Würden wir
 // den Fußweg abziehen, wäre jeder solche Umstieg „knapp“.
 function umstiege(verbindung) {

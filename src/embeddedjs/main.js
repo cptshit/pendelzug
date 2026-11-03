@@ -332,7 +332,7 @@ function standText(verbindung) {
 // Fußbereich, gleich in allen Ansichten:
 //   ───────────────────────────────────────
 //   [links: Text in eigenem Style]   Stand 07:05
-//   Daten: Transitous · ohne Gewähr
+//   Daten: hvv · ohne Gewähr
 // „links“ ist in A und C die Ankunft, in B der Abfahrtsort.
 // Optional „klein“ = { text, farbe }: Zusatz in 14 px direkt dahinter (z. B. „statt 07:58“).
 function Fussbereich(verbindung, linksText, linksStyle, klein) {

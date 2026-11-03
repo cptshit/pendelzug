@@ -4,10 +4,7 @@
 // Format des Pakets: siehe src/embeddedjs/testdaten.js (gleiches Format).
 
 var einstellungen = require("./einstellungen");
-
-// Platzhalter-Linienfarben (später nach hvv-Vorgaben)
-var FARBE_S = "#AA00AA";
-var FARBE_REGIO = "#555555";
+var linienfarben = require("./linienfarben");
 
 // Millisekunden → „HH:MM“ in der Zeitzone des Handys
 function hhmm(ms) {
@@ -58,10 +55,11 @@ function paket(verbindungen, index, info) {
 	var zugNr = 0;
 	var teile = verbindung.teile.map(function (t) {
 		if (t.art === "fuss") return { art: "fuss", dauer: t.dauer };
+		var farben = linienfarben.fuer(t.linie, t.datenFarbe);
 		var teil = {
 			art: "zug",
 			linie: t.linie,
-			farbe: /^S\d/.test(t.linie) ? FARBE_S : FARBE_REGIO,
+			farbe: farben.farbe,
 			plan: hhmm(t.planAb),
 			versp: Math.max(0, minuten(t.istAb - t.planAb)),
 			ab: t.ab,
@@ -71,6 +69,7 @@ function paket(verbindungen, index, info) {
 			umstieg: umst[zugNr++],
 		};
 		if (t.ausfall) teil.ausfall = true;   // nur mitschicken, wenn wahr (Paket klein halten)
+		if (farben.schrift) teil.schrift = farben.schrift;   // nur bei heller Badge-Farbe
 		// Keine Echtzeitdaten für diesen Zug: Die Uhr zeigt dann die Plan-Zeit
 		// grau und ohne „+0“ – „+0“ würde „pünktlich“ behaupten.
 		if (t.echtzeit === false) teil.ohneEz = true;

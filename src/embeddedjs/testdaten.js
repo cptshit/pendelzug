@@ -16,7 +16,8 @@
 //   teile      Liste der Teilstücke, in Fahrtreihenfolge:
 //     art      "zug" (S-Bahn, Regionalzug usw.) oder "fuss" (Fußweg)
 //     linie    Linienname, z. B. "S3"
-//     farbe    Badge-Farbe (Platzhalter, später nach hvv-Vorgaben)
+//     farbe    Badge-Farbe (aus src/pkjs/linienfarben.js)
+//     schrift  Schriftfarbe im Badge, nur bei hellen Farben ("#000000"); sonst weiß
 //     plan     Plan-Abfahrt "HH:MM"
 //     versp    Verspätung in Minuten (0 = pünktlich)
 //     ausfall  true, wenn der Zug ausfällt
@@ -44,8 +45,11 @@
 // Umstieg = Ist-Abfahrt des nächsten Zugs − Ist-Ankunft des vorigen
 // (ein Fußweg dazwischen zählt mit hinein, wie in src/pkjs/aufbereitung.js).
 
-const S3 = "#AA00AA";     // Platzhalter-Farbe S-Bahn
-const REGIO = "#555555";  // Platzhalter-Farbe Regionalzüge
+// Farben wie in src/pkjs/linienfarben.js
+const S3 = "#550055";     // S3 violett
+const RB61 = "#0055AA";   // blau
+const RB71 = "#00AAFF";   // hellblau
+const RE6 = "#00AA55";    // grün
 
 export default [
 	// 1) Alles pünktlich, ein Umstieg mit viel Puffer
@@ -56,7 +60,7 @@ export default [
 		status: "PÜNKTLICH",
 		teile: [
 			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 0, ab: "Halstenbek", gleis: "1", an: "07:32", anVersp: 0, umstieg: null },
-			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: 9 },
+			{ art: "zug", linie: "RE6", farbe: RE6, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: 9 },
 		],
 		ankunft: { plan: "07:58", versp: 0 },
 		quelle: "Transitous",
@@ -71,8 +75,8 @@ export default [
 		status: "UMSTIEG KNAPP",
 		teile: [
 			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 3, ab: "Halstenbek", gleis: "1", an: "07:19", anVersp: 3, umstieg: null },
-			{ art: "zug", linie: "RB71", farbe: REGIO, plan: "07:24", versp: 0, ab: "Pinneberg", gleis: "2", an: "07:35", anVersp: 1, umstieg: 2 },
-			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 1, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 1, umstieg: 6 },
+			{ art: "zug", linie: "RB71", farbe: RB71, plan: "07:24", versp: 0, ab: "Pinneberg", gleis: "2", an: "07:35", anVersp: 1, umstieg: 2 },
+			{ art: "zug", linie: "RE6", farbe: RE6, plan: "07:41", versp: 1, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 1, umstieg: 6 },
 		],
 		ankunft: { plan: "07:58", versp: 1 },
 		quelle: "Transitous",
@@ -88,7 +92,7 @@ export default [
 		teile: [
 			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 16, ab: "Halstenbek", gleis: "1", an: "07:28", anVersp: 16, umstieg: null },
 			{ art: "fuss", dauer: 4 },
-			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: -3 },
+			{ art: "zug", linie: "RE6", farbe: RE6, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: -3 },
 		],
 		ankunft: { plan: "07:58", versp: 0, ersatz: "08:21" },
 		quelle: "Transitous",
@@ -103,8 +107,8 @@ export default [
 		status: "PÜNKTLICH",
 		teile: [
 			{ art: "zug", linie: "S3", farbe: S3, plan: "07:12", versp: 0, ab: "Halstenbek", gleis: "1", an: "07:18", anVersp: 0, umstieg: null },
-			{ art: "zug", linie: "RB71", farbe: REGIO, plan: "07:24", versp: 0, ab: "Pinneberg", gleis: "2", an: "07:34", anVersp: 0, umstieg: 6 },
-			{ art: "zug", linie: "RE6", farbe: REGIO, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: 7 },
+			{ art: "zug", linie: "RB71", farbe: RB71, plan: "07:24", versp: 0, ab: "Pinneberg", gleis: "2", an: "07:34", anVersp: 0, umstieg: 6 },
+			{ art: "zug", linie: "RE6", farbe: RE6, plan: "07:41", versp: 0, ab: "Elmshorn", gleis: "3", an: "07:58", anVersp: 0, umstieg: 7 },
 		],
 		ankunft: { plan: "07:58", versp: 0 },
 		quelle: "Transitous",

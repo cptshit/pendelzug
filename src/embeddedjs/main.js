@@ -293,7 +293,9 @@ function Badge(teil, top = 4) {
 		left: 4, top, width: 42, height: 22,
 		contents: [
 			new RoundRect(null, { left: 0, right: 0, top: 0, bottom: 0, radius: 4, skin: farbSkin(teil.farbe) }),
-			new Label(null, { left: 0, right: 0, top: 0, bottom: 0, style: badgeStyle, string: teil.linie }),
+			// Schrift weiß; bei hellen Linienfarben schickt das Handy „schrift“ (schwarz) mit
+			new Label(null, { left: 0, right: 0, top: 0, bottom: 0, string: teil.linie,
+				style: teil.schrift ? farbStyle("bold 18px Gothic", teil.schrift, "center") : badgeStyle }),
 		],
 	});
 }
@@ -484,7 +486,8 @@ function StreckenLeiste(verbindung, top) {
 			left: x, top: 0, width: stueck, height: hoehe,
 			contents: [
 				new RoundRect(null, { left: 0, right: 0, top: 0, bottom: 0, radius: 4, skin: farbSkin(fuss ? FARBE.linie : teil.farbe) }),
-				new Label(null, { left: 0, right: 0, top: 0, bottom: 0, style: fuss ? leisteFussStyle : leisteStyle, string: fuss ? "Fuß" : teil.linie }),
+				new Label(null, { left: 0, right: 0, top: 0, bottom: 0, string: fuss ? "Fuß" : teil.linie,
+					style: fuss ? leisteFussStyle : teil.schrift ? farbStyle("bold 14px Gothic", teil.schrift, "center") : leisteStyle }),
 			],
 		}));
 

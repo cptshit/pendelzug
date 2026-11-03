@@ -92,6 +92,9 @@ function teilstueck(leg) {
 		// realTime = Transitous hat Echtzeitdaten für diese Fahrt. Ohne sie
 		// sind Ist- und Plan-Zeit gleich – das heißt aber NICHT „pünktlich“.
 		echtzeit: !!leg.realTime,
+		// Linienfarbe aus den Fahrplandaten (z. B. „512c75“), falls vorhanden.
+		// Wird nur für Linien genutzt, die nicht in linienfarben.js stehen.
+		datenFarbe: leg.routeColor || "",
 	};
 }
 

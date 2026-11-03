@@ -14,7 +14,7 @@ SALZ=
 
 # Optional – Standardwerte stehen in server/lib/gti.php:
 # DATENORDNER=            (Standard: Unterordner „daten“ neben dieser Datei)
-# GRENZE_GERAET=30        Anfragen pro Gerät …
+# GRENZE_GERAET=60        Anfragen pro Gerät …
 # GRENZE_GERAET_SEKUNDEN=600   … in 10 Minuten
 # GRENZE_TAG=5000         HVV-Anfragen pro Tag insgesamt
 # CACHE_ROUTE_SEKUNDEN=60

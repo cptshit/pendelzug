@@ -31,7 +31,7 @@ Anzeige auf der Uhr gedacht.
 - Der Server baut die HVV-Anfragen selbst, Eingaben werden streng geprüft.
 - Zwischenspeicher: Verbindungen 60 s (Zeit auf 5 Minuten abgerundet),
   Haltestellen 30 Tage.
-- Grenzen: 30 Anfragen pro Gerät in 10 Minuten, 5000 HVV-Anfragen pro Tag.
+- Grenzen: 60 Anfragen pro Gerät in 10 Minuten, 5000 HVV-Anfragen pro Tag.
 - IP-Adressen werden nicht gespeichert, nur ein Prüfwert (SHA-256 mit
   geheimem Salz).
 

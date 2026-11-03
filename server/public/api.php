@@ -37,6 +37,11 @@ require __DIR__ . '/../lib/speicher.php';
 header('Content-Type: application/json; charset=utf-8');
 // Zwischenspeicher im Netz (Proxys, Handy) nicht benutzen: Echtzeitdaten.
 header('Cache-Control: no-store');
+// Abfragen aus dem Browser erlauben (CORS): Die Einstellungsseite der App ist
+// eine Webseite und fragt hier nach Haltestellen-Vorschlägen. Ohne diesen
+// Kopf verwirft der Browser die Antwort. Unbedenklich, weil die Schnittstelle
+// ohnehin öffentlich ist und nichts verändert.
+header('Access-Control-Allow-Origin: *');
 
 // Antwort schicken und Skript beenden.
 function antworte(int $status, array $daten): void

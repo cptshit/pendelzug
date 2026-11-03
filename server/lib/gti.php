@@ -19,7 +19,8 @@ const KONFIG_STANDARD = [
     'GTI_PASS' => '',
     'SALZ' => '',                     // geheimer Zufallswert für die IP-Prüfwerte
     'DATENORDNER' => '',              // Zwischenspeicher, außerhalb des Webordners
-    'GRENZE_GERAET' => 30,            // Anfragen pro Gerät …
+    'GRENZE_GERAET' => 60,            // Anfragen pro Gerät … (Vorschlagssuche
+                                      // beim Tippen braucht mehrere)
     'GRENZE_GERAET_SEKUNDEN' => 600,  // … in diesem Zeitraum (10 Minuten)
     'GRENZE_TAG' => 5000,             // HVV-Anfragen pro Tag, alle Geräte zusammen
     'CACHE_ROUTE_SEKUNDEN' => 60,     // Verbindungen so lange wiederverwenden

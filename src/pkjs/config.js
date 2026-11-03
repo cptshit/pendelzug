@@ -101,10 +101,10 @@ module.exports = [
 			{ type: "heading", defaultValue: "Datenquelle" },
 			{
 				type: "text",
-				defaultValue: "Mit Geofox-Zugang (Benutzer und Passwort unten): hvv Geofox. " +
-					"Ohne: <a href=\"https://transitous.org\">Transitous</a> " +
-					"(<a href=\"https://transitous.org/sources/\">Datenquellen und Lizenzen</a>, " +
-					"Kartendaten © OpenStreetMap-Mitwirkende).",
+				defaultValue: "Die Verbindungen kommen vom HVV (Geofox) über den Pendelzug-Server " +
+					"auf wortreich.eu. Wer einen eigenen Geofox-Zugang hat, kann ihn unten eintragen; " +
+					"dann fragt die App direkt beim HVV. Die Haltestellen-Vorschläge oben kommen " +
+					"noch von <a href=\"https://transitous.org\">Transitous</a>.",
 			},
 			{
 				type: "input",
@@ -117,7 +117,7 @@ module.exports = [
 				type: "input",
 				messageKey: "geofoxPasswort",
 				label: "Geofox-Passwort",
-				description: "Benutzer und Passwort bleiben auf dem Handy und werden nie an die Uhr geschickt. Sind beide Felder ausgefüllt, fragt die App beim HVV (Geofox) statt bei Transitous.",
+				description: "Benutzer und Passwort bleiben auf dem Handy und werden nie an die Uhr geschickt. Optional: Sind beide Felder ausgefüllt, fragt die App direkt beim HVV statt über den Pendelzug-Server.",
 				defaultValue: "",
 				attributes: { type: "password", autocomplete: "off" },
 			},

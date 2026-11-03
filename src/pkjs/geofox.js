@@ -1,17 +1,26 @@
 // geofox.js – Adapter für die Verbindungssuche bei hvv Geofox GTI.
 //
 // GTI ist die offizielle Schnittstelle des HVV (Hamburger Verkehrsverbund),
-// betrieben von der HBT GmbH. Sie braucht Zugangsdaten (Benutzer/Passwort),
-// die man auf der Einstellungsseite einträgt. Sie bleiben auf dem Handy.
+// betrieben von der HBT GmbH. Sie braucht Zugangsdaten (Benutzer/Passwort).
 // Nutzungsbedingungen, kurz: App bleibt kostenlos, Serverlast gering halten,
 // hvv-Liniendarstellung verwenden.
+//
+// Zwei Wege zum HVV:
+//   1. Über den Pendelzug-Server (konfig.SERVER, auf wortreich.eu). Der hält
+//      die Zugangsdaten. Das ist der Normalfall – Store-Nutzer haben keinen
+//      eigenen Geofox-Zugang. Code des Servers: server/ im Repository.
+//   2. Direkt, wenn auf der Einstellungsseite eigene Geofox-Zugangsdaten
+//      stehen. Sie bleiben auf dem Handy; jede Anfrage wird hier signiert.
+// Beide Wege liefern Daten im GTI-Format; die Umwandlung („teilstueck“) ist
+// dieselbe.
 //
 // Doku: GTI-Handbuch, https://gti.geofox.de/html/GTIHandbuch_p.html
 // Ausprobiert mit tools/gti-route.js (Teilschritt 3b).
 //
-// Liefert dasselbe neutrale Format wie transitous.js (siehe „teilstueck“),
-// damit aufbereitung.js und die Uhr nicht wissen müssen, woher die Daten kommen.
+// Liefert das neutrale Format (siehe „teilstueck“), damit aufbereitung.js und
+// die Uhr nicht wissen müssen, woher die Daten kommen.
 
+var konfig = require("./konfig");
 var einstellungen = require("./einstellungen");
 var signatur = require("./hmac-sha1").signatur;
 
@@ -19,21 +28,53 @@ var BASIS = "https://gti.geofox.de/gti/public/";
 var API_VERSION = 63;
 
 // Wie viele Verbindungen nach der ersten zusätzlich geholt werden. Zusammen
-// 6 Verbindungen, wie bei Transitous: Die Suche beginnt 60 Minuten vor jetzt
-// (siehe index.js), damit auch die Verbindung dabei ist, in der man sitzt.
+// 6 Verbindungen: Die Suche beginnt 60 Minuten vor jetzt (siehe index.js),
+// damit auch die Verbindung dabei ist, in der man sitzt. (Der Server fragt
+// mit derselben Zahl.)
 var WEITERE_VERBINDUNGEN = 5;
 
-// -----------------------------------------------------------------------------
-// Anfrage an GTI: POST mit JSON und Signatur. callback(fehlertext, antwort)
-// -----------------------------------------------------------------------------
-function gti(methode, daten, callback) {
+// Eigene Zugangsdaten aus den Einstellungen – oder null, wenn keine da sind
+// (dann geht es über den Server).
+function eigenerZugang() {
 	var e = einstellungen.lesen();
 	var benutzer = String(e.geofoxBenutzer || "").trim();
 	var passwort = String(e.geofoxPasswort || "");
-	if (!benutzer || !passwort) {
+	return benutzer && passwort ? { benutzer: benutzer, passwort: passwort } : null;
+}
+
+// -----------------------------------------------------------------------------
+// Weg 1: Anfrage an den Pendelzug-Server (HTTP GET). callback(fehler, antwort)
+// Der Server antwortet bei Fehlern mit { fehler: "Text für die Uhr" }.
+// -----------------------------------------------------------------------------
+function server(parameter, callback) {
+	var teile = [];
+	for (var k in parameter) teile.push(k + "=" + encodeURIComponent(parameter[k]));
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", konfig.SERVER + "?" + teile.join("&"), true);
+	xhr.timeout = 20000;
+	xhr.onload = function () {
+		var json = null;
+		try { json = JSON.parse(xhr.responseText); } catch (err) { json = null; }
+		if (xhr.status === 200 && json && !json.fehler) { callback(null, json); return; }
+		callback(json && json.fehler ? json.fehler : "Pendelzug-Server: Fehler " + xhr.status);
+	};
+	xhr.onerror = function () { callback("Pendelzug-Server nicht erreichbar"); };
+	xhr.ontimeout = function () { callback("Pendelzug-Server antwortet nicht"); };
+	console.log("Server: " + parameter.aktion);
+	xhr.send();
+}
+
+// -----------------------------------------------------------------------------
+// Weg 2: direkt an GTI: POST mit JSON und Signatur. callback(fehlertext, antwort)
+// -----------------------------------------------------------------------------
+function gti(methode, daten, callback) {
+	var zugang = eigenerZugang();
+	if (!zugang) {
 		callback("Geofox-Zugangsdaten fehlen (Einstellungen)");
 		return;
 	}
+	var benutzer = zugang.benutzer;
+	var passwort = zugang.passwort;
 
 	// Body genau EINMAL als Text erzeugen; genau dieser Text wird signiert
 	// und verschickt. Jede Änderung danach machte die Signatur ungültig.
@@ -94,13 +135,9 @@ function haltestelle(halt, callback) {
 		callback(null, JSON.parse(gespeichert));
 		return;
 	}
-	gti("checkName", {
-		theName: { name: halt.name, type: "STATION" },
-		maxList: 10,
-		coordinateType: "EPSG_4326",
-	}, function (fehler, antwort) {
+	halteSuchen(halt.name, function (fehler, liste) {
 		if (fehler) { callback(fehler); return; }
-		var treffer = (antwort.results || []).filter(function (r) { return r.type === "STATION"; });
+		var treffer = liste.filter(function (r) { return r.type === "STATION"; });
 		if (!treffer.length) { callback("Haltestelle „" + halt.name + "“ bei Geofox nicht gefunden"); return; }
 
 		// Abstand zu den gespeicherten Koordinaten (grob, reicht zum Vergleichen).
@@ -122,6 +159,58 @@ function haltestelle(halt, callback) {
 		localStorage.setItem(schluessel, JSON.stringify(ergebnis));
 		callback(null, ergebnis);
 	});
+}
+
+// Haltestellen nach Namen suchen – direkt oder über den Server.
+// callback(fehler, liste) mit Einträgen im GTI-Format (name, id, coordinate …)
+function halteSuchen(name, callback) {
+	if (eigenerZugang()) {
+		gti("checkName", {
+			theName: { name: name, type: "STATION" },
+			maxList: 10,
+			coordinateType: "EPSG_4326",
+		}, function (fehler, antwort) {
+			callback(fehler, fehler ? null : (antwort.results || []));
+		});
+	} else {
+		server({ aktion: "halt", name: name }, function (fehler, antwort) {
+			callback(fehler, fehler ? null : (antwort.halte || []));
+		});
+	}
+}
+
+// Verbindungen holen – direkt oder über den Server.
+// callback(fehler, liste) mit GTI-„schedules“ (je { scheduleElements: […] })
+function verbindungenHolen(von, nach, abZeit, callback) {
+	if (eigenerZugang()) {
+		gti("getRoute", {
+			start: von,
+			dest: nach,
+			time: alsGtiZeit(abZeit),
+			timeIsDeparture: true,          // „time“ ist Abfahrt, nicht Ankunft
+			schedulesBefore: 0,
+			schedulesAfter: WEITERE_VERBINDUNGEN,
+			realtime: "REALTIME",           // Echtzeitdaten einbeziehen
+			intermediateStops: false,       // Zwischenhalte brauchen wir nicht
+		}, function (fehler, antwort) {
+			// Mit Echtzeit liefert GTI „realtimeSchedules“; zur Sicherheit
+			// auch die reine Fahrplanliste „schedules“ akzeptieren.
+			callback(fehler, fehler ? null : (antwort.realtimeSchedules || antwort.schedules || []));
+		});
+	} else {
+		// Der Server braucht nur die Kennungen und die Zeit als
+		// „JJJJ-MM-TTTHH:MM“ (Ortszeit); die übrigen Werte setzt er selbst.
+		var z = alsGtiZeit(abZeit);
+		var d = z.date.split(".");
+		server({
+			aktion: "route",
+			von: von.id,
+			nach: nach.id,
+			zeit: d[2] + "-" + d[1] + "-" + d[0] + "T" + z.time,
+		}, function (fehler, antwort) {
+			callback(fehler, fehler ? null : (antwort.verbindungen || []));
+		});
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -154,7 +243,7 @@ function teilstueck(el) {
 	// Umstiege innerhalb eines Bahnhofs: GTI liefert sie als eigene
 	// Teilstücke „Umstiegsfußweg“ (CHANGE bzw. CHANGE_SAME_PLATFORM). Das ist
 	// kein echter Fußweg, sondern Umsteigezeit – wir lassen ihn weg, wie bei
-	// Transitous. Die Umstiegszeit ist dann die volle Lücke zwischen den Zügen.
+	// Die Umstiegszeit ist dann die volle Lücke zwischen den Zügen.
 	if (typ === "CHANGE" || typ === "CHANGE_SAME_PLATFORM") return null;
 	if (typ === "FOOTPATH") {
 		if (el.from.name === el.to.name) return null;
@@ -182,7 +271,7 @@ function teilstueck(el) {
 }
 
 // -----------------------------------------------------------------------------
-// Verbindungen suchen – gleiche Schnittstelle wie transitous.js
+// Verbindungen suchen – Schnittstelle, die index.js aufruft
 //   vonHalt, nachHalt  Haltestellen aus den Einstellungen: { id, name, lat, lon }
 //   abZeit             Date: frühester Abfahrtszeitpunkt
 //   callback(fehler, verbindungen)  – Liste von { teile: [...] }
@@ -192,20 +281,8 @@ function suche(vonHalt, nachHalt, abZeit, callback) {
 		if (fehler) { callback(fehler); return; }
 		haltestelle(nachHalt, function (fehler, nach) {
 			if (fehler) { callback(fehler); return; }
-			gti("getRoute", {
-				start: von,
-				dest: nach,
-				time: alsGtiZeit(abZeit),
-				timeIsDeparture: true,          // „time“ ist Abfahrt, nicht Ankunft
-				schedulesBefore: 0,
-				schedulesAfter: WEITERE_VERBINDUNGEN,
-				realtime: "REALTIME",           // Echtzeitdaten einbeziehen
-				intermediateStops: false,       // Zwischenhalte brauchen wir nicht
-			}, function (fehler, antwort) {
+			verbindungenHolen(von, nach, abZeit, function (fehler, liste) {
 				if (fehler) { callback(fehler); return; }
-				// Mit Echtzeit liefert GTI „realtimeSchedules“; zur Sicherheit
-				// auch die reine Fahrplanliste „schedules“ akzeptieren.
-				var liste = antwort.realtimeSchedules || antwort.schedules || [];
 				var verbindungen = liste.map(function (s) {
 					return {
 						teile: (s.scheduleElements || []).map(teilstueck).filter(function (t) {

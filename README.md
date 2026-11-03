@@ -10,7 +10,8 @@ frei wählbar (Standard: Halstenbek ⇄ Itzehoe).
 
 > **Version 1.1.0.** **Stand:** Schritt 6 – echte Verbindungen vom HVV (Geofox) mit Echtzeit,
 > Linienfarben, Einstellungsseite mit frei wählbarem Start und Ziel, Automatik mit Wakeup und
-> Vibration. Als Nächstes: eigener Server, damit alle Nutzer HVV-Daten bekommen (siehe „Datenquelle“).
+> Vibration. HVV-Daten für alle über den Pendelzug-Server. Als Nächstes: Haltestellen-Vorschläge
+> ebenfalls über den Server, danach Store-Version 1.2.0.
 
 Echte Verbindung im Emulator (hvv Geofox, 03.11.2026):
 
@@ -91,8 +92,8 @@ In der Pebble-App auf dem Handy über das Zahnrad bei Pendelzug:
 - **Automatik Hinweg / Rückweg:** an/aus, Wochentage, Zeitfenster
   (Standard: Hinweg Mo–Fr 07:00–09:00, Rückweg aus), siehe unten.
 - **Geofox-Benutzer und -Passwort:** bleiben auf dem Handy, werden nie an die
-  Uhr geschickt. Sind beide ausgefüllt, kommen die Verbindungen vom HVV
-  (siehe „Datenquelle“).
+  Uhr geschickt. Optional: Sind beide ausgefüllt, fragt die App direkt beim
+  HVV statt über den Pendelzug-Server (siehe „Datenquelle“).
 
 <img src="screenshots/einstellungen.png" alt="Einstellungsseite" width="250">
 
@@ -115,26 +116,27 @@ Die Verbindungen kommen vom **HVV über die Schnittstelle
 [Geofox GTI](https://gti.geofox.de/html/GTIHandbuch_p.html)** (betrieben von
 der HBT GmbH), mit Echtzeitdaten: Verspätungen, Ausfälle, Gleiswechsel.
 
-- Geofox braucht Zugangsdaten (Benutzer und Passwort), die man beim HVV
-  beantragt. Sie werden auf der Einstellungsseite eingetragen, bleiben auf dem
-  Handy und stehen **nie im Code oder im Repository**.
-- Jede Anfrage wird signiert: HMAC-SHA1 über den Inhalt der Anfrage, mit dem
-  Passwort als Schlüssel (`src/pkjs/hmac-sha1.js`).
+Geofox braucht Zugangsdaten. Damit niemand eigene beantragen muss, fragt die
+App über den **Pendelzug-Server** (`https://www.wortreich.eu/pendelzug/api.php`,
+Code im Ordner [`server/`](server/README.md)). Er hält die Zugangsdaten (mit
+Erlaubnis der HBT), speichert Ergebnisse kurz zwischen und begrenzt die Zahl
+der Anfragen. IP-Adressen speichert er nicht.
+
+- **Eigener Geofox-Zugang (optional):** Benutzer und Passwort auf der
+  Einstellungsseite eintragen – dann fragt die App direkt beim HVV. Die
+  Zugangsdaten bleiben auf dem Handy; jede Anfrage wird signiert
+  (HMAC-SHA1, `src/pkjs/hmac-sha1.js`).
 - Nutzungsbedingungen, kurz: App bleibt kostenlos, Serverlast gering halten
   (die App merkt sich Ergebnisse 90 Sekunden und die Haltestellen dauerhaft),
   hvv-Liniendarstellung verwenden.
+- Die **Vorschlagssuche** für Start und Ziel auf der Einstellungsseite nutzt
+  noch [Transitous](https://transitous.org)
+  ([Datenquellen und Lizenzen](https://transitous.org/sources/)); sie wird als
+  Nächstes auf den Pendelzug-Server umgestellt.
 
-**Ohne Geofox-Zugangsdaten** nutzt die App übergangsweise
-[Transitous](https://transitous.org) (freier Fahrplandienst;
-[Datenquellen und Lizenzen](https://transitous.org/sources/), Kartendaten ©
-[OpenStreetMap](https://www.openstreetmap.org/copyright)-Mitwirkende). Auch die
-Vorschlagssuche für Start und Ziel läuft noch über Transitous. Geplant ist ein
-eigener Server auf wortreich.eu, über den alle Nutzer HVV-Daten bekommen;
-danach entfällt Transitous.
-
-Der Handy-Teil ist in Adapter (`geofox.js`, `transitous.js`) und
-quellenunabhängige Aufbereitung (`aufbereitung.js`) getrennt. Unten auf der Uhr
-steht, woher die Daten kommen („Daten: hvv“ bzw. „Daten: Transitous“).
+Der Handy-Teil ist in Adapter (`geofox.js`) und quellenunabhängige
+Aufbereitung (`aufbereitung.js`) getrennt. Unten auf der Uhr steht
+„Daten: hvv · ohne Gewähr“.
 
 ### Testskripte für Geofox (auf dem Rechner, nicht auf der Uhr)
 
@@ -217,10 +219,10 @@ src/pkjs/konfig.js            Standard-Haltestellen, Kontakt, Zwischenspeicher-D
 src/pkjs/config.js            Aufbau der Einstellungsseite (Clay)
 src/pkjs/haltestelle-feld.js  Clay-Feld „Haltestelle“ mit Vorschlagssuche
 src/pkjs/einstellungen.js     Einstellungen lesen, Teil für die Uhr (ohne Zugangsdaten)
-src/pkjs/geofox.js            Adapter für die Verbindungssuche beim HVV (Geofox GTI)
+src/pkjs/geofox.js            Adapter für den HVV (Geofox GTI): über den Server oder direkt
 src/pkjs/hmac-sha1.js         Signatur für Geofox-Anfragen
 src/pkjs/linienfarben.js      Farben der Linien-Badges
-src/pkjs/transitous.js        Adapter für Transitous (Ersatz ohne Geofox-Zugang)
+src/pkjs/transitous.js        alter Transitous-Adapter (unbenutzt, wird entfernt)
 src/pkjs/aufbereitung.js      Umstiege, Ampel, Paket für die Uhr (quellenunabhängig)
 src/c/mdbl.c                  startet JavaScript auf der Uhr (Speichergrößen)
 package.json                  App-Daten: Name, UUID, Plattformen
@@ -230,6 +232,7 @@ store/                        Logo, Store-Screenshots, Texte für den Pebble-Sto
 docker/browser.sh             Browser-Ersatz im Container (für die Einstellungsseite)
 pebble.sh                     Startskript für die Docker-Umgebung
 tools/                        Testskripte für Geofox (Node.js, auf dem Rechner)
+server/                       Pendelzug-Server (PHP) auf wortreich.eu
 ```
 
 ## Lizenz

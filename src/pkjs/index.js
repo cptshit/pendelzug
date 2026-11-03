@@ -26,18 +26,12 @@ var clayConfig = require("./config");
 var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
 // Eigenes Feld „Haltestelle mit Vorschlagssuche“ für Start und Ziel
 clay.registerComponent(require("./haltestelle-feld"));
-// Datenquellen (Adapter). Beide bieten dieselbe Funktion „suche“ und liefern
-// dasselbe neutrale Format.
-var transitous = require("./transitous");
+// Datenquelle (Adapter): der HVV über Geofox GTI – über den Pendelzug-Server
+// oder, mit eigenen Zugangsdaten, direkt (das entscheidet geofox.js).
+// Ein Adapter bietet die Funktion „suche“ und liefert das neutrale Format.
 var geofox = require("./geofox");
-
-// Welche Quelle gilt? Sind Geofox-Benutzer und -Passwort eingetragen, fragen
-// wir den HVV (Geofox) – genauere Daten, offizielle Echtzeit. Sonst
-// Transitous, das ohne Zugangsdaten funktioniert (z. B. für alle, die die App
-// aus dem Store haben und keinen Geofox-Zugang besitzen).
 function aktuelleQuelle() {
-	var e = einstellungen.lesen();
-	return String(e.geofoxBenutzer || "").trim() && e.geofoxPasswort ? geofox : transitous;
+	return geofox;
 }
 
 // Zwischenspeicher der letzten Suche (mit Name der Quelle, die sie geliefert hat)

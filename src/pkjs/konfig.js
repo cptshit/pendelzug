@@ -12,6 +12,10 @@ module.exports = {
 	// absichtlich KEINE Anfrage an Transitous (Nutzungsbedingungen).
 	KONTAKT: "pendelzug@wortreich.eu",
 
+	// Pendelzug-Server: vermittelt die Anfragen an den HVV (Geofox), damit man
+	// keine eigenen Geofox-Zugangsdaten braucht. Code: server/ im Repository.
+	SERVER: "https://www.wortreich.eu/pendelzug/api.php",
+
 	// Standard-Strecke, solange in den Einstellungen nichts anderes gewählt ist.
 	// Start und Ziel wählt man auf der Einstellungsseite mit der Vorschlagssuche
 	// (haltestelle-feld.js). Gespeichert wird dasselbe Format wie hier:
@@ -22,6 +26,6 @@ module.exports = {
 	ZIEL: { id: "de-DELFI_de:01061:46671", name: "Itzehoe", lat: 53.923874, lon: 9.510287 },
 
 	// Wie lange (Sekunden) ein Suchergebnis wiederverwendet wird, z. B. beim
-	// Blättern mit Auf/Ab. Hält die Last für Transitous gering.
+	// Blättern mit Auf/Ab. Hält die Last für den HVV und den Server gering.
 	CACHE_SEKUNDEN: 90,
 };

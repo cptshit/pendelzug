@@ -79,7 +79,12 @@ case "${1:-}" in
         container_starten
         mkdir -p "$PROJEKT/build"
         rm -f "$PROJEKT/build/einstellungen.html"
-        docker exec "$CONTAINER" pebble emu-app-config --emulator emery &
+        # Das Werkzeug protokolliert die Rücksprung-Adresse („GET /close?…“).
+        # Darin stehen ALLE Einstellungen im Klartext – auch das
+        # Geofox-Passwort. Deshalb filtern wir diese Zeile heraus (grep -v),
+        # damit das Passwort nie im Terminal (oder auf Screenshots) erscheint.
+        { docker exec "$CONTAINER" pebble emu-app-config --emulator emery 2>&1 \
+            | grep --line-buffered -v '/close?'; } &
         werkzeug=$!
         for _ in $(seq 1 30); do
             [ -f "$PROJEKT/build/einstellungen.html" ] && break

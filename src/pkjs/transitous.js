@@ -9,7 +9,7 @@
 //
 // Jeder Adapter liefert dasselbe neutrale Format (siehe „teilstueck“ unten),
 // damit aufbereitung.js und die Uhr nicht wissen müssen, woher die Daten kommen.
-// Der spätere Geofox-Adapter (Schritt 6) muss nur dieselbe Funktion „suche“ anbieten.
+// Der Geofox-Adapter (geofox.js) bietet dieselbe Funktion „suche“ an.
 
 var konfig = require("./konfig");
 
@@ -89,6 +89,9 @@ function teilstueck(leg) {
 		ab: leg.from.name,
 		gleis: leg.from.track || leg.from.scheduledTrack || "",
 		ausfall: !!leg.cancelled,
+		// realTime = Transitous hat Echtzeitdaten für diese Fahrt. Ohne sie
+		// sind Ist- und Plan-Zeit gleich – das heißt aber NICHT „pünktlich“.
+		echtzeit: !!leg.realTime,
 	};
 }
 

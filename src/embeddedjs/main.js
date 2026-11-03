@@ -62,6 +62,8 @@ const AMPEL = {
 	gruen: { grund: "#55FF55", schrift: "#000000" },
 	gelb:  { grund: "#FFFF00", schrift: "#000000" },
 	rot:   { grund: "#AA0000", schrift: "#FFFFFF" },
+	// Kein Zug der Verbindung hat Echtzeitdaten: neutral grau, Text „KEINE ECHTZEIT“
+	grau:  { grund: "#AAAAAA", schrift: "#000000" },
 };
 
 // Textfarbe der Fußzeile je Gesamtstatus (Ampel). Die Fußzeile richtet sich
@@ -70,6 +72,7 @@ const AMPEL_TEXT = {
 	gruen: FARBE.puenktlich,
 	gelb: FARBE.verspaetet,
 	rot: FARBE.problem,
+	grau: FARBE.grau,
 };
 
 // Einstellungen von der Einstellungsseite (Clay), vom Handy geschickt und im
@@ -210,8 +213,16 @@ function countdown(teil, jetzt) {
 // Verspätung als Text + Farbe. Bei Ausfall: „fällt aus“ in Rot.
 function verspaetung(teil) {
 	if (teil.ausfall) return { text: "fällt aus", farbe: FARBE.problem };
+	// Ohne Echtzeitdaten wissen wir nichts über Pünktlichkeit: kein „+0“.
+	if (teil.ohneEz) return { text: "", farbe: FARBE.grau };
 	if (teil.versp > 0) return { text: "+" + teil.versp, farbe: FARBE.verspaetet };
 	return { text: "+0", farbe: FARBE.puenktlich };
+}
+
+// Style für die Plan-Zeit eines Teilstücks: normal schwarz, ohne
+// Echtzeitdaten grau (zeigt: „nur Fahrplan“).
+function planStyle(teil, font, normal) {
+	return teil.ohneEz ? farbStyle(font, FARBE.grau) : normal;
 }
 
 // Hat dieses Teilstück eine Umstiegszeit (also nicht das erste Teilstück)?
@@ -245,7 +256,9 @@ function zweiteZeile(teil) {
 // (In der Fußzeile steht bei Rot, wenn bekannt, die Ersatz-Ankunft, siehe
 // FussbereichAnkunft.)
 function ankunftZusatz(verbindung) {
-	return verbindung.ampel === "rot" ? "verpasst" : "+" + (verbindung.ankunft.versp || 0);
+	if (verbindung.ampel === "rot") return "verpasst";
+	if (verbindung.ankunft.ohneEz) return "";   // keine Echtzeit: kein „+0“
+	return "+" + (verbindung.ankunft.versp || 0);
 }
 
 // Nur die Teilstücke mit Zug (ohne Fußwege)
@@ -293,7 +306,7 @@ function ZugKurz(teil, top, rechts) {
 		left: 0, right: 0, top, height: 28,
 		contents: [
 			Badge(teil, 3),
-			new Label(null, { left: 50, top: 0, height: 28, style: zeitStyle, string: teil.plan }),
+			new Label(null, { left: 50, top: 0, height: 28, style: planStyle(teil, "bold 24px Gothic", zeitStyle), string: teil.plan }),
 			new Label(null, { left: 104, top: 0, height: 28, style: farbStyle("bold 24px Gothic", v.farbe), string: v.text }),
 			rechts
 				? new Label(null, { right: 4, top: 3, height: 22, style: countdownStyle, string: rechts })
@@ -382,7 +395,7 @@ function ZugZeile(teil) {
 		left: 0, right: 0, height: MASS.zug,
 		contents: [
 			Badge(teil),
-			new Label(null, { left: 50, top: 0, height: 28, style: zeitStyle, string: teil.plan }),
+			new Label(null, { left: 50, top: 0, height: 28, style: planStyle(teil, "bold 24px Gothic", zeitStyle), string: teil.plan }),
 			new Label(null, { left: 104, top: 0, height: 28, style: farbStyle("bold 24px Gothic", v.farbe), string: v.text }),
 			new Label(null, { right: 4, top: 4, height: 22, style: gleisStyle, string: teil.gleis ? "Gl. " + teil.gleis : "" }),
 			new Label(null, { left: 50, right: 2, top: MASS.zeile2, height: 16, style: farbStyle("14px Gothic", z.farbe), string: z.text }),
@@ -515,7 +528,11 @@ function AnsichtB(verbindung) {
 		new Row(null, {
 			top: 18, height: 50,
 			contents: [
-				new Label(null, { top: 0, height: 50, style: grossStyle, string: verbindung.ankunft.plan }),
+				new Label(null, {
+					top: 0, height: 50, string: verbindung.ankunft.plan,
+					// ohne Echtzeit für den letzten Zug: Ankunftszeit grau
+					style: verbindung.ankunft.ohneEz ? farbStyle("bold 42px Bitham", FARBE.grau) : grossStyle,
+				}),
 				new Label(null, {
 					top: 20, height: 24, style: farbStyle("bold 18px Gothic", AMPEL_TEXT[verbindung.ampel]),
 					string: " " + ankunftZusatz(verbindung),
@@ -591,7 +608,7 @@ function AnsichtC(verbindung) {
 			left: 0, right: 0, top: 44, height: 32,
 			contents: [
 				Badge(aktuell, 5),
-				new Label(null, { left: 50, top: 0, height: 32, style: zeit28Style, string: aktuell.plan }),
+				new Label(null, { left: 50, top: 0, height: 32, style: planStyle(aktuell, "bold 28px Gothic", zeit28Style), string: aktuell.plan }),
 				new Label(null, { left: 116, top: 0, height: 32, style: farbStyle("bold 28px Gothic", v.farbe), string: v.text }),
 				new Label(null, { right: 4, top: 6, height: 22, style: gleisStyle, string: aktuell.gleis ? "Gl. " + aktuell.gleis : "" }),
 			],

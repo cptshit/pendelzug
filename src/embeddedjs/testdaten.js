@@ -10,7 +10,8 @@
 // Aufbau einer Verbindung:
 //   richtung   Text für die Kopfzeile
 //   ziel       Zielbahnhof, z. B. für „Ankunft Itzehoe“ (Ansicht B)
-//   ampel      "gruen" | "gelb" | "rot" (Farbe des Statusbands)
+//   ampel      "gruen" | "gelb" | "rot" (Farbe des Statusbands),
+//              "grau" = kein Zug der Verbindung hat Echtzeitdaten
 //   status     Text im Statusband (Farbe nie allein, immer auch Text)
 //   teile      Liste der Teilstücke, in Fahrtreihenfolge:
 //     art      "zug" (S-Bahn, Regionalzug usw.) oder "fuss" (Fußweg)
@@ -19,6 +20,8 @@
 //     plan     Plan-Abfahrt "HH:MM"
 //     versp    Verspätung in Minuten (0 = pünktlich)
 //     ausfall  true, wenn der Zug ausfällt
+//     ohneEz   true, wenn es für diesen Zug keine Echtzeitdaten gibt (dann
+//              Plan-Zeit grau, kein „+0“); fehlt sonst
 //     ab       Abfahrtsort dieses Teilstücks
 //     an       Plan-Ankunft am Ende dieses Teilstücks "HH:MM"
 //     anVersp  Verspätung bei der Ankunft in Minuten
@@ -26,7 +29,8 @@
 //     umstieg  Minuten, die zum Umsteigen bleiben (null beim ersten Teilstück);
 //              negativ = Anschluss nicht mehr erreichbar
 //     dauer    nur bei Fußweg: Gehzeit in Minuten
-//   ankunft    { plan: "HH:MM", versp: Minuten, ersatz: "HH:MM" }
+//   ankunft    { plan: "HH:MM", versp: Minuten, ersatz: "HH:MM", ohneEz: true }
+//              ohneEz nur, wenn der letzte Zug keine Echtzeitdaten hat
 //              ersatz nur bei Rot: Ankunft der nächsten Verbindung ohne Problem
 //   stand      Uhrzeit der letzten Aktualisierung "HH:MM"
 //   quelle     Name der Datenquelle für den Hinweis „Daten: … · ohne Gewähr“

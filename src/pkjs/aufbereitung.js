@@ -71,6 +71,9 @@ function paket(verbindungen, index, info) {
 			umstieg: umst[zugNr++],
 		};
 		if (t.ausfall) teil.ausfall = true;   // nur mitschicken, wenn wahr (Paket klein halten)
+		// Keine Echtzeitdaten für diesen Zug: Die Uhr zeigt dann die Plan-Zeit
+		// grau und ohne „+0“ – „+0“ würde „pünktlich“ behaupten.
+		if (t.echtzeit === false) teil.ohneEz = true;
 		return teil;
 	});
 
@@ -81,14 +84,21 @@ function paket(verbindungen, index, info) {
 	var grenze = einstellungen.lesen().knapp;
 	var knapp = umst.some(function (u) { return u !== null && u >= 0 && u <= grenze; });
 	var anVersp = Math.max(0, minuten(letzter.istAn - letzter.planAn));
+	// Hat KEIN Zug der Verbindung Echtzeitdaten, können wir nichts über
+	// Pünktlichkeit sagen: graues Band „KEINE ECHTZEIT“ statt grün.
+	// Hat nur ein Teil Echtzeit, bewertet die Ampel diese Züge; die übrigen
+	// gehen mit ihrer Plan-Zeit ein (Verspätung 0).
+	var keineEchtzeit = zuege.every(function (t) { return t.echtzeit === false; });
 	var ampel, status;
-	if (ausfall)          { ampel = "rot";  status = "AUSFALL"; }
+	if (ausfall)            { ampel = "rot";  status = "AUSFALL"; }
+	else if (keineEchtzeit) { ampel = "grau"; status = "KEINE ECHTZEIT"; }
 	else if (verpasst)    { ampel = "rot";  status = "ANSCHLUSS WEG"; }
 	else if (knapp)       { ampel = "gelb"; status = "UMSTIEG KNAPP"; }
 	else if (anVersp > 0) { ampel = "gelb"; status = "VERSPÄTET +" + anVersp; }
 	else                  { ampel = "gruen"; status = "PÜNKTLICH"; }
 
 	var ankunft = { plan: hhmm(letzter.planAn), versp: anVersp };
+	if (letzter.echtzeit === false) ankunft.ohneEz = true;
 	// Bei Rot: Ankunft der nächsten Verbindung ohne Problem („an 08:21 statt 07:58“)
 	if (ampel === "rot") {
 		for (var i = index + 1; i < verbindungen.length; i++) {

@@ -40,3 +40,7 @@ CLAUDE.md
 
 # Rohantworten der GTI-Testskripte (tools/gti-route.js) – nur zum Ansehen
 tools/ausgabe/
+
+# Server: Zugangsdaten und Zwischenspeicher (nur auf dem Webspace bzw. lokal)
+pendelzug-privat/
+server/daten/

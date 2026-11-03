@@ -1,0 +1,21 @@
+# konfig.beispiel.txt – Vorlage für die Server-Konfiguration
+#
+# Auf dem Webspace als  pendelzug-privat/konfig.txt  ablegen – AUSSERHALB des
+# öffentlichen Webordners (siehe server/README.md). Rechte: 600.
+# Diese Vorlage enthält KEINE echten Werte und darf ins Repository.
+
+# Geofox-Zugangsdaten (von der HBT GmbH)
+GTI_USER=
+GTI_PASS=
+
+# Geheimer Zufallswert für die Prüfwerte der IP-Adressen. Einmal erzeugen mit
+#   openssl rand -hex 32
+SALZ=
+
+# Optional – Standardwerte stehen in server/lib/gti.php:
+# DATENORDNER=            (Standard: Unterordner „daten“ neben dieser Datei)
+# GRENZE_GERAET=30        Anfragen pro Gerät …
+# GRENZE_GERAET_SEKUNDEN=600   … in 10 Minuten
+# GRENZE_TAG=5000         HVV-Anfragen pro Tag insgesamt
+# CACHE_ROUTE_SEKUNDEN=60
+# CACHE_HALT_SEKUNDEN=2592000
